@@ -1,0 +1,1 @@
+TrustNet is an SOS app built in Flutter using Firebase as its backend. 
