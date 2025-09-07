@@ -1,0 +1,1 @@
+This directory is meant for the purpose of saving all the docs that we will be creating over the course of this project

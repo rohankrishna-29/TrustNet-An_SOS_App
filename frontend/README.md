@@ -1,0 +1,1 @@
+This directory will have all the files and directories that will be required to make the frontend using Flutter
