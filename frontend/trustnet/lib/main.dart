@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trustnet/demo.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,10 +13,25 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'TrustNet: An SOS App for Women and Child Safety',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+
+      theme: ThemeData.from(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Color(0xFF784DD4),
+          brightness: Brightness.light
+        ),
       ),
-      home: Scaffold(),
+
+      darkTheme: ThemeData.from(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Color(0xFF784DD4),
+          brightness: Brightness.dark,
+        ),
+      ),
+
+      themeMode: ThemeMode.dark,
+      home: Demo(),
     );
   }
 }
