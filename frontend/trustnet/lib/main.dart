@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:trustnet/screens/home_screen.dart';
+import 'package:trustnet/pages/login_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
       ),
 
       themeMode: ThemeMode.dark,
-      home: HomeScreen(),
+      home: LoginPage(),
     );
   }
 }
