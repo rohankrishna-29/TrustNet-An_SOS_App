@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:trustnet/pages/signup_page.dart';
-//import 'package:iconsax/iconsax.dart'; // optional, for better icons
 
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+class SignUpPage extends StatelessWidget {
+  const SignUpPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +17,7 @@ class LoginPage extends StatelessWidget {
 
               // Placeholder Logo
               const Icon(
-                Icons.public, // Placeholder for TrustNet logo
+                Icons.public, // Replace with your TrustNet logo
                 size: 100,
                 color: Color(0xFF9D4EDD),
               ),
@@ -35,60 +33,29 @@ class LoginPage extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 60),
+              const SizedBox(height: 50),
 
-              // Email / Mobile Field
-              TextField(
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Email ID/Mobile No',
-                  hintStyle: const TextStyle(color: Colors.grey),
-                  filled: true,
-                  fillColor: const Color(0xFF1E1E1E),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
+              // Name
+              _buildInputField("Name"),
               const SizedBox(height: 16),
 
-              // Password Field
-              TextField(
-                obscureText: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Password',
-                  hintStyle: const TextStyle(color: Colors.grey),
-                  filled: true,
-                  fillColor: const Color(0xFF1E1E1E),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
+              // Phone
+              _buildInputField("Phone no"),
+              const SizedBox(height: 16),
 
-              const SizedBox(height: 10),
+              // Email
+              _buildInputField("Email address"),
+              const SizedBox(height: 16),
 
-              // Forgot Password
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {},
-                  child: const Text(
-                    "Forgot Password?",
-                    style: TextStyle(
-                      color: Color(0xFF9D4EDD),
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ),
+              // Sex
+              _buildInputField("Sex"),
+              const SizedBox(height: 16),
 
-              const SizedBox(height: 10),
+              // Date of Birth
+              _buildInputField("Date of Birth"),
+              const SizedBox(height: 30),
 
-              // Login Button
+              // Create Account Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -101,7 +68,7 @@ class LoginPage extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   child: const Text(
-                    "Login",
+                    "Create Account",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -113,11 +80,11 @@ class LoginPage extends StatelessWidget {
 
               const Spacer(),
 
-              // Create Account
+              // Login Redirect
               Column(
                 children: [
                   const Text(
-                    "Don’t have an account yet?",
+                    "Already have an account?",
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   const SizedBox(height: 6),
@@ -125,7 +92,7 @@ class LoginPage extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const SignUpPage()));
+                        Navigator.pop(context); // Go back to login
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF9D4EDD),
@@ -135,7 +102,7 @@ class LoginPage extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       child: const Text(
-                        "Create Account",
+                        "Login",
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -149,6 +116,23 @@ class LoginPage extends StatelessWidget {
               const SizedBox(height: 20),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // Reusable Input Field Widget
+  static Widget _buildInputField(String hint) {
+    return TextField(
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.grey),
+        filled: true,
+        fillColor: const Color(0xFF1E1E1E),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide.none,
         ),
       ),
     );
