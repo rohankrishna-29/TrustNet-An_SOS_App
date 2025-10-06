@@ -1,103 +1,149 @@
 import 'package:flutter/material.dart';
-import 'package:trustnet/pages/home_screen.dart';
+//import 'package:iconsax/iconsax.dart'; // optional, for better icons
 
-
-class LoginPage extends StatefulWidget {
+class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       body: SafeArea(
-        child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              const SizedBox(height: 80),
 
-              // trustnet logo
-              Icon(
-                Icons.lock,
-                size: 50,  
+              // Placeholder Logo
+              const Icon(
+                Icons.public, // Placeholder for TrustNet logo
+                size: 100,
+                color: Color(0xFF9D4EDD),
+              ),
+              const SizedBox(height: 8),
+
+              const Text(
+                "TRUSTNET",
+                style: TextStyle(
+                  color: Color(0xFF9D4EDD),
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                ),
               ),
 
+              const SizedBox(height: 60),
 
+              // Email / Mobile Field
+              TextField(
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Email ID/Mobile No',
+                  hintStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: const Color(0xFF1E1E1E),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Password Field
+              TextField(
+                obscureText: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Password',
+                  hintStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: const Color(0xFF1E1E1E),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // Forgot Password
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {},
+                  child: const Text(
+                    "Forgot Password?",
+                    style: TextStyle(
+                      color: Color(0xFF9D4EDD),
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // Login Button
               SizedBox(
-                height: 50,
-              ),
-          
-              //welcome back text
-              Text("Welcome Back!",),
-
-
-              SizedBox(
-                height: 50,
-              ),
-          
-              // email id/phone no textfield
-              TextField(),
-
-
-              SizedBox(
-                height: 20,
-              ),
-
-
-
-              //password textfield
-              TextField(),
-
-
-              SizedBox(
-                height: 20,
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF9D4EDD),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text(
+                    "Login",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ),
 
+              const Spacer(),
 
-          
-              //forgot password? text
-              Text("Forgot your password? Click here"),
-
-              SizedBox(
-                height: 50,
-              ),
-
-
-          
-              //login button
-              ElevatedButton(onPressed: () => HomeScreen(), 
-              child: Row(
+              // Create Account
+              Column(
                 children: [
-                  Icon(Icons.login),
-                  Text("Login"),
+                  const Text(
+                    "Don’t have an account yet?",
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF9D4EDD),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text(
+                        "Create Account",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
-              ),
-
-
-              
-              //Dont have an account?
-              Text("Don't have an account?"),
-
-              SizedBox(
-                height: 20,
-              ),
-          
-          
-              //signup button
-              ElevatedButton(onPressed: () {
-                
-              }, 
-              child: Row(
-                children: [
-                  Icon(Icons.login),
-                  Text("Signup"),
-                ],
-              ))
+              const SizedBox(height: 20),
             ],
           ),
         ),
