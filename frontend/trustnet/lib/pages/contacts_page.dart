@@ -24,14 +24,8 @@ class _TrustedContactsPageState extends State<TrustedContactsPage> {
     await Future.delayed(Duration(seconds: 2)); // simulate delay
     if (!mounted) return; // ✅ prevent setState() after dispose
     setState(() {
-      contacts = [
-        {'name': 'Alice Cooper', 'status': 'active'},
-        {'name': 'Bob Marley', 'status': 'active'},
-        {'name': 'Charlie Brown', 'status': 'active'},
-      ];
-      requests = [
-        {'name': 'David Green', 'status': 'pending'},
-      ];
+      contacts = contacts = List.from(contacts);
+      requests = List.from(requests);
     });
   }
 
