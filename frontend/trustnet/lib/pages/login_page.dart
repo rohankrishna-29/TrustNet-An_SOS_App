@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trustnet/pages/home_screen.dart';
 import 'package:trustnet/pages/signup_page.dart';
 //import 'package:iconsax/iconsax.dart'; // optional, for better icons
 
@@ -92,7 +93,9 @@ class LoginPage extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(),));
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF9D4EDD),
                     shape: RoundedRectangleBorder(
