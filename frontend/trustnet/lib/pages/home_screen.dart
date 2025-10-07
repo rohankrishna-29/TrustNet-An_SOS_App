@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:trustnet/pages/contacts_page.dart';
+import 'package:trustnet/pages/home_page.dart';
+import 'package:trustnet/pages/profile_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -11,10 +14,17 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    Center(child: Text("Home Page"),),
-    Center(child: Text("Contacts page"),),
+    HomePage(),
+    TrustedContactsPage(),
     Center(child: Text("Maps page"),),
-    Center(child: Text("Profile page"),)
+    ProfilePage()
+  ];
+
+  final List<String> _titles = [
+    "TrustNet",
+    "Trusted Contacts",
+    "Maps",
+    "Profile"
   ];
 
   /*void _onItemTapped(int index){
