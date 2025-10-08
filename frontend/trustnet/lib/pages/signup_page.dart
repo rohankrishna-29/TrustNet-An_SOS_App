@@ -1,129 +1,213 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:trustnet/pages/home_screen.dart';
 
-class SignUpPage extends StatelessWidget {
+class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
+
+  @override
+  State<SignUpPage> createState() => _SignUpPageState();
+}
+
+class _SignUpPageState extends State<SignUpPage> {
+  // Controllers for input fields
+  final nameController = TextEditingController();
+  final phoneController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final sexController = TextEditingController();
+  final dobController = TextEditingController();
+
+  bool isLoading = false; // For loading indicator
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    phoneController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    sexController.dispose();
+    dobController.dispose();
+    super.dispose();
+  }
+
+  // Firebase signup & Firestore user creation
+  void createAccount() async {
+    final name = nameController.text.trim();
+    final phone = phoneController.text.trim();
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+    final sex = sexController.text.trim();
+    final dob = dobController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Name, Email, and Password are required")),
+      );
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      UserCredential cred = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
+      final uid = cred.user!.uid;
+
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        "name": name,
+        "phone": phone,
+        "email": email,
+        "sex": sex,
+        "dob": dob,
+        "trusted_contacts": {},
+      });
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? "Account creation failed")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Unexpected error: $e")));
+    }
+
+    setState(() => isLoading = false);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 80),
-
-              // Placeholder Logo
-              const Icon(
-                Icons.public, // Replace with your TrustNet logo
-                size: 100,
-                color: Color(0xFF9D4EDD),
-              ),
-              const SizedBox(height: 8),
-
-              const Text(
-                "TRUSTNET",
-                style: TextStyle(
-                  color: Color(0xFF9D4EDD),
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
-                ),
-              ),
-
-              const SizedBox(height: 50),
-
-              // Name
-              _buildInputField("Name"),
-              const SizedBox(height: 16),
-
-              // Phone
-              _buildInputField("Phone no"),
-              const SizedBox(height: 16),
-
-              // Email
-              _buildInputField("Email address"),
-              const SizedBox(height: 16),
-
-              // Sex
-              _buildInputField("Sex"),
-              const SizedBox(height: 16),
-
-              // Date of Birth
-              _buildInputField("Date of Birth"),
-              const SizedBox(height: 30),
-
-              // Create Account Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF9D4EDD),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 80),
+                    const Icon(
+                      Icons.public,
+                      size: 100,
+                      color: Color(0xFF9D4EDD),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text(
-                    "Create Account",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-
-              const Spacer(),
-
-              // Login Redirect
-              Column(
-                children: [
-                  const Text(
-                    "Already have an account?",
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
-                  const SizedBox(height: 6),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context); // Go back to login
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF9D4EDD),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "TRUSTNET",
+                      style: TextStyle(
+                        color: Color(0xFF9D4EDD),
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 2,
                       ),
-                      child: const Text(
-                        "Login",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                    ),
+                    const SizedBox(height: 50),
+
+                    _buildInputField("Name", nameController),
+                    const SizedBox(height: 16),
+                    _buildInputField("Phone no", phoneController),
+                    const SizedBox(height: 16),
+                    _buildInputField("Email address", emailController),
+                    const SizedBox(height: 16),
+                    _buildInputField(
+                      "Password",
+                      passwordController,
+                      obscure: true,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildInputField("Sex", sexController),
+                    const SizedBox(height: 16),
+                    _buildInputField("Date of Birth", dobController),
+                    const SizedBox(height: 30),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: createAccount,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF9D4EDD),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text(
+                          "Create Account",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+
+                    const SizedBox(height: 20),
+                    const Text(
+                      "Already have an account?",
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF9D4EDD),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text(
+                          "Login",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
-            ],
-          ),
+            ),
+
+            // Loading overlay
+            if (isLoading)
+              Container(
+                color: Colors.black.withOpacity(0.5),
+                child: const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF9D4EDD)),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 
-  // Reusable Input Field Widget
-  static Widget _buildInputField(String hint) {
+  static Widget _buildInputField(
+    String hint,
+    TextEditingController controller, {
+    bool obscure = false,
+  }) {
     return TextField(
+      controller: controller,
+      obscureText: obscure,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         hintText: hint,

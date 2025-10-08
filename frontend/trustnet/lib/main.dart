@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart'; // ✅ required for Firebase config
 import 'package:trustnet/pages/login_page.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // ✅ ensures plugin binding
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform, // ✅ initialize Firebase
+  );
+
+  runApp(const MyApp()); // ✅ run app only after Firebase is ready
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -18,7 +24,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: Color(0xFF784DD4),
-          brightness: Brightness.light
+          brightness: Brightness.light,
         ),
       ),
 
@@ -31,8 +37,7 @@ class MyApp extends StatelessWidget {
       ),
 
       themeMode: ThemeMode.dark,
-      home: LoginPage(),
+      home: const LoginPage(), // ✅ unchanged
     );
   }
 }
-
