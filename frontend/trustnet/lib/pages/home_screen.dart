@@ -3,6 +3,8 @@ import 'package:trustnet/pages/contacts_page.dart';
 import 'package:trustnet/pages/home_page.dart';
 import 'package:trustnet/pages/profile_page.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,9 +16,111 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
+  late final String currentUid; // <-- add this
+
+  late final List<Widget> _pages; // <-- change to late so we can initialize after fetching UID
+
+  final List<String> _titles = [
+    "TrustNet",
+    "Trusted Contacts",
+    "Maps",
+    "Profile"
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Fetch current Firebase user UID
+    final user = FirebaseAuth.instance.currentUser;
+    currentUid = user?.uid ?? '';
+
+    // Initialize pages with currentUid passed to ContactsPage
+    _pages = [
+      HomePage(),
+      ContactsPage(currentUid: currentUid), // <-- pass UID here
+      Center(child: Text("Maps page")),
+      ProfilePage()
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        // ... your existing app bar code
+        toolbarHeight:44,
+        leadingWidth:44,
+      
+        leading: Padding(padding: const EdgeInsets.only(top:8.0, bottom:3.0, left:8.0, right:8.0),
+          child: SvgPicture.asset('lib/assets/icons/TrustNet-logo-only.svg',
+          height: 40,
+          width: 40,
+          ),
+        ),
+        title: Text("TrustNet"),
+        centerTitle: true,
+        elevation: 4,
+        actions: [
+          PopupMenuButton(itemBuilder: (context) =>  [
+            PopupMenuItem(
+              value: 1, 
+              child: Row(
+                children: [
+                  Icon(Icons.settings),
+                  Text("Settings"),
+                ],
+              )
+            ),
+            PopupMenuItem(
+              value: 2, 
+              child: Row(
+                children: [
+                  Icon(Icons.upload),
+                  Text("Uploaded media"),
+                ],
+              )
+            ),
+            PopupMenuItem(
+              value: 3, 
+              child: Row(
+                children: [
+                  Icon(Icons.history),
+                  Text("History")
+                ],
+              )
+            ),
+          ],
+          )
+        ],
+      ),
+      body: _pages[_selectedIndex],
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        destinations: [
+          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+          NavigationDestination(icon: Icon(Icons.contacts), label: 'Contacts'),
+          NavigationDestination(icon: Icon(Icons.map), label: 'Map'),
+          NavigationDestination(icon: Icon(Icons.person), label: 'You'),
+        ],
+      ),
+    );
+  }
+}
+
+
+/*
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
+
   final List<Widget> _pages = [
     HomePage(),
-    TrustedContactsPage(),
+    ContactsPage(),
     Center(child: Text("Maps page"),),
     ProfilePage()
   ];
@@ -114,3 +218,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+*/

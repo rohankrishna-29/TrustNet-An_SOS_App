@@ -1,3 +1,4 @@
+/*
 import 'package:flutter/material.dart';
 
 class TrustedContactsPage extends StatefulWidget {
@@ -145,6 +146,117 @@ class RequestTile extends StatelessWidget {
               ? Icon(Icons.close, color: Colors.red)
               : Icon(Icons.check, color: Colors.green),
         ],
+      ),
+    );
+  }
+}
+*/
+
+import 'package:flutter/material.dart';
+import '../widgets/contact_tiles.dart';
+import '../widgets/send_request_button.dart';
+import '../services/trusted_contacts_services.dart';
+
+class ContactsPage extends StatelessWidget {
+  final String currentUid;
+  final ConnectionsService service = ConnectionsService();
+
+  ContactsPage({required this.currentUid});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Color(0xFF121212), // dark background
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                children: [
+                  // -----------------------------
+                  // Pending Requests Section
+                  // -----------------------------
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Text(
+                      'Pending Requests',
+                      style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: service.getPendingRequests(currentUid),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+                      final requests = snapshot.data!;
+                      if (requests.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text('No pending requests', style: TextStyle(color: Colors.white54)),
+                        );
+                      }
+                      return Column(
+                        children: requests.map((request) {
+                          return RequestTile(
+                            name: request['name'] ?? request['email'],
+                            userId: request['userId'],
+                            currentUid: currentUid,
+                            service: service,
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+
+                  SizedBox(height: 24),
+
+                  // -----------------------------
+                  // Accepted Connections Section
+                  // -----------------------------
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Text(
+                      'Connections',
+                      style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: service.getAcceptedConnections(currentUid),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+                      final connections = snapshot.data!;
+                      if (connections.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text('No connections yet', style: TextStyle(color: Colors.white54)),
+                        );
+                      }
+                      return Column(
+                        children: connections.map((contact) {
+                          return ConnectionsTile(
+                            name: contact['name'] ?? contact['email'],
+                            status: contact['alertStatus'] ?? 'green',
+                            onMapPressed: () {
+                              // TODO: handle map icon pressed
+                            },
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            // -----------------------------
+            // Send Request Button
+            // -----------------------------
+            SendRequestButton(
+              currentUid: currentUid,
+              service: service,
+            ),
+          ],
+        ),
       ),
     );
   }
