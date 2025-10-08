@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:trustnet/pages/home_screen.dart';
 import 'package:trustnet/pages/signup_page.dart';
-
+import 'package:flutter_svg/flutter_svg.dart';
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
@@ -53,10 +53,15 @@ class LoginPage extends StatelessWidget {
               const SizedBox(height: 80),
 
               // Placeholder Logo
-              const Icon(Icons.public, size: 100, color: Color(0xFF9D4EDD)),
+              //const Icon(Icons.public, size: 100, color: Color(0xFF9D4EDD)),
+              SvgPicture.asset(
+                      'lib/assets/icons/TrustNet-logo+text.svg',
+                        width: 100,
+                        height: 100,
+                    ),
               const SizedBox(height: 8),
 
-              const Text(
+              /*const Text(
                 "TRUSTNET",
                 style: TextStyle(
                   color: Color(0xFF9D4EDD),
@@ -64,7 +69,7 @@ class LoginPage extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   letterSpacing: 2,
                 ),
-              ),
+              ),*/
               const SizedBox(height: 60),
 
               // Email Field
