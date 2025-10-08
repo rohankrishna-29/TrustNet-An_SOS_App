@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trustnet/pages/contacts_page.dart';
 import 'package:trustnet/pages/home_page.dart';
 import 'package:trustnet/pages/profile_page.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -38,7 +39,15 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Icon(Icons.favorite),
+        toolbarHeight:44,
+        leadingWidth:44,
+      
+        leading: Padding(padding: const EdgeInsets.only(top:8.0, bottom:3.0, left:8.0, right:8.0),
+          child: SvgPicture.asset('lib/assets/icons/TrustNet-logo-only.svg',
+          height: 40,
+          width: 40,
+          ),
+        ),
         title: Text("TrustNet"),
         centerTitle: true,
         elevation: 4,
