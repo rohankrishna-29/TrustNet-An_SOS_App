@@ -1,4 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -9,6 +16,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String status = "OFF";
+  Timer? _locationTimer;
+  String? username; // For readable DB entries
+  Position? _lastPosition;
 
   final Map<String, Color> statusColors = {
     "OFF": Colors.grey,
@@ -16,16 +26,131 @@ class _HomePageState extends State<HomePage> {
     "RED": Colors.red,
   };
 
+  late final DatabaseReference _dbRef;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _dbRef = FirebaseDatabase.instanceFor(
+      app: Firebase.app(),
+      databaseURL:
+          "https://trustnet-an-sos-app-default-rtdb.asia-southeast1.firebasedatabase.app",
+    ).ref().child("users");
+
+    _requestLocationPermission();
+    _fetchUsername();
+  }
+
+  // Fetch username from Firestore for Realtime DB readability
+  Future<void> _fetchUsername() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      setState(() {
+        username = doc.data()?['name'] ?? uid;
+      });
+    } catch (e) {
+      debugPrint("Error fetching username: $e");
+    }
+  }
+
+  // Request location permission
+  Future<void> _requestLocationPermission() async {
+    final status = await Permission.locationWhenInUse.status;
+    if (!status.isGranted) {
+      final result = await Permission.locationWhenInUse.request();
+      if (!result.isGranted) {
+        debugPrint("Location permission denied.");
+      }
+    }
+  }
+
   void toggleStatus() {
     setState(() {
       if (status == "OFF") {
         status = "GREEN";
+        _startLiveLocation();
       } else if (status == "GREEN") {
         status = "RED";
+        _startLiveLocation(redMode: true);
       } else if (status == "RED") {
         status = "OFF";
+        _stopLiveLocation();
       }
     });
+  }
+
+  void _startLiveLocation({bool redMode = false}) {
+    _locationTimer?.cancel();
+    _locationTimer = Timer.periodic(const Duration(seconds: 20), (_) async {
+      await _updateLocationInDB(redMode: redMode);
+    });
+  }
+
+  void _stopLiveLocation() async {
+    _locationTimer?.cancel();
+    _locationTimer = null;
+
+    if (username == null) return;
+
+    await _dbRef.child(username!).update({
+      "status": "OFF",
+      "lastUpdated": DateTime.now().toIso8601String(),
+    });
+  }
+
+  Future<void> _updateLocationInDB({bool redMode = false}) async {
+    if (username == null) return;
+
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      // Skip update if user hasn't moved significantly (optional)
+      if (_lastPosition != null) {
+        final distance = Geolocator.distanceBetween(
+          _lastPosition!.latitude,
+          _lastPosition!.longitude,
+          position.latitude,
+          position.longitude,
+        );
+        if (distance < 5 && !redMode) return;
+      }
+      _lastPosition = position;
+
+      final mapsUrl =
+          "https://www.google.com/maps?q=${position.latitude},${position.longitude}";
+
+      final data = {
+        "latitude": position.latitude,
+        "longitude": position.longitude,
+        "mapsUrl": mapsUrl,
+        "status": redMode ? "RED" : "GREEN",
+        "lastUpdated": DateTime.now().toIso8601String(),
+      };
+
+      if (redMode) data["alert"] = true;
+
+      // Keyed by username
+      await _dbRef.child(username!).update(data);
+    } catch (e) {
+      debugPrint("Location update failed: $e");
+    }
+  }
+
+  @override
+  void dispose() {
+    _locationTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -34,15 +159,12 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      
-
-      // Body
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             GestureDetector(
-              onTap: toggleStatus, // tap to toggle
+              onTap: toggleStatus,
               child: Container(
                 height: 200,
                 width: 200,
@@ -58,14 +180,12 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                child: Center(
-                  child: Icon(Icons.golf_course_rounded), //placeholder logo
-                ),
+                child: const Center(child: Icon(Icons.golf_course_rounded)),
               ),
             ),
             const SizedBox(height: 20),
             GestureDetector(
-              onTap: toggleStatus, // tap text also toggles
+              onTap: toggleStatus,
               child: Text(
                 "Status: $status",
                 style: TextStyle(

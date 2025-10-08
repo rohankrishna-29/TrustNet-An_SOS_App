@@ -1,13 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_dart/core.dart';
 import 'package:trustnet/pages/home_screen.dart';
 import 'package:trustnet/pages/signup_page.dart';
-//import 'package:iconsax/iconsax.dart'; // optional, for better icons
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Controllers to capture email and password
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+
+    // Firebase login function
+    void loginUser() async {
+      final email = emailController.text.trim();
+      final password = passwordController.text.trim();
+
+      if (email.isEmpty || password.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Email and password cannot be empty")),
+        );
+        return;
+      }
+
+      try {
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+
+        // Navigate to HomeScreen after successful login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } on FirebaseAuthException catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message ?? "Login failed")));
+      }
+    }
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
@@ -19,11 +54,7 @@ class LoginPage extends StatelessWidget {
               const SizedBox(height: 80),
 
               // Placeholder Logo
-              const Icon(
-                Icons.public, // Placeholder for TrustNet logo
-                size: 100,
-                color: Color(0xFF9D4EDD),
-              ),
+              const Icon(Icons.public, size: 100, color: Color(0xFF9D4EDD)),
               const SizedBox(height: 8),
 
               const Text(
@@ -35,11 +66,11 @@ class LoginPage extends StatelessWidget {
                   letterSpacing: 2,
                 ),
               ),
-
               const SizedBox(height: 60),
 
-              // Email / Mobile Field
+              // Email Field
               TextField(
+                controller: emailController,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   hintText: 'Email ID/Mobile No',
@@ -56,6 +87,7 @@ class LoginPage extends StatelessWidget {
 
               // Password Field
               TextField(
+                controller: passwordController,
                 obscureText: true,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
@@ -69,33 +101,26 @@ class LoginPage extends StatelessWidget {
                   ),
                 ),
               ),
-
               const SizedBox(height: 10),
 
-              // Forgot Password
+              // Forgot Password (UI unchanged)
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () {},
                   child: const Text(
                     "Forgot Password?",
-                    style: TextStyle(
-                      color: Color(0xFF9D4EDD),
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Color(0xFF9D4EDD), fontSize: 14),
                   ),
                 ),
               ),
-
               const SizedBox(height: 10),
 
               // Login Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(),));
-                  },
+                  onPressed: loginUser, // Firebase login
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF9D4EDD),
                     shape: RoundedRectangleBorder(
@@ -113,7 +138,6 @@ class LoginPage extends StatelessWidget {
                   ),
                 ),
               ),
-
               const Spacer(),
 
               // Create Account
@@ -128,7 +152,12 @@ class LoginPage extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const SignUpPage()));
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SignUpPage(),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF9D4EDD),
