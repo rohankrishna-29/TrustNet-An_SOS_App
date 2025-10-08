@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_dart/core.dart';
 import 'package:trustnet/pages/home_screen.dart';
 import 'package:trustnet/pages/signup_page.dart';
 
