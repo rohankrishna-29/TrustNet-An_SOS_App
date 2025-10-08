@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,33 +17,58 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String status = "OFF";
   Timer? _locationTimer;
-  String? username; // For readability in Realtime DB
+  String? username; // For readable DB entries
+  Position? _lastPosition;
+
   final Map<String, Color> statusColors = {
     "OFF": Colors.grey,
     "GREEN": Colors.green,
     "RED": Colors.red,
   };
 
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref().child(
-    "users",
-  );
+  late final DatabaseReference _dbRef;
 
   @override
   void initState() {
     super.initState();
+
+    _dbRef = FirebaseDatabase.instanceFor(
+      app: Firebase.app(),
+      databaseURL:
+          "https://trustnet-an-sos-app-default-rtdb.asia-southeast1.firebasedatabase.app",
+    ).ref().child("users");
+
+    _requestLocationPermission();
     _fetchUsername();
   }
 
+  // Fetch username from Firestore for Realtime DB readability
   Future<void> _fetchUsername() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
-    setState(() {
-      username = doc.data()?['name'] ?? uid;
-    });
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      setState(() {
+        username = doc.data()?['name'] ?? uid;
+      });
+    } catch (e) {
+      debugPrint("Error fetching username: $e");
+    }
+  }
+
+  // Request location permission
+  Future<void> _requestLocationPermission() async {
+    final status = await Permission.locationWhenInUse.status;
+    if (!status.isGranted) {
+      final result = await Permission.locationWhenInUse.request();
+      if (!result.isGranted) {
+        debugPrint("Location permission denied.");
+      }
+    }
   }
 
   void toggleStatus() {
@@ -51,7 +78,7 @@ class _HomePageState extends State<HomePage> {
         _startLiveLocation();
       } else if (status == "GREEN") {
         status = "RED";
-        _sendRedAlert();
+        _startLiveLocation(redMode: true);
       } else if (status == "RED") {
         status = "OFF";
         _stopLiveLocation();
@@ -59,59 +86,65 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _startLiveLocation() {
+  void _startLiveLocation({bool redMode = false}) {
     _locationTimer?.cancel();
-    _locationTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
-      try {
-        final pos = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-        );
-
-        final uid = FirebaseAuth.instance.currentUser?.uid;
-        if (uid == null || username == null) return;
-
-        await _dbRef.child(uid).set({
-          "username": username,
-          "latitude": pos.latitude,
-          "longitude": pos.longitude,
-          "status": "GREEN",
-          "lastUpdated": DateTime.now().toIso8601String(),
-        });
-      } catch (e) {
-        debugPrint("Location update failed: $e");
-      }
-    });
-  }
-
-  void _sendRedAlert() async {
-    _locationTimer?.cancel();
-    final pos = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null || username == null) return;
-
-    await _dbRef.child(uid).set({
-      "username": username,
-      "latitude": pos.latitude,
-      "longitude": pos.longitude,
-      "status": "RED",
-      "alert": true,
-      "lastUpdated": DateTime.now().toIso8601String(),
+    _locationTimer = Timer.periodic(const Duration(seconds: 20), (_) async {
+      await _updateLocationInDB(redMode: redMode);
     });
   }
 
   void _stopLiveLocation() async {
     _locationTimer?.cancel();
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null || username == null) return;
+    _locationTimer = null;
 
-    await _dbRef.child(uid).set({
-      "username": username,
+    if (username == null) return;
+
+    await _dbRef.child(username!).update({
       "status": "OFF",
       "lastUpdated": DateTime.now().toIso8601String(),
     });
+  }
+
+  Future<void> _updateLocationInDB({bool redMode = false}) async {
+    if (username == null) return;
+
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      // Skip update if user hasn't moved significantly (optional)
+      if (_lastPosition != null) {
+        final distance = Geolocator.distanceBetween(
+          _lastPosition!.latitude,
+          _lastPosition!.longitude,
+          position.latitude,
+          position.longitude,
+        );
+        if (distance < 5 && !redMode) return;
+      }
+      _lastPosition = position;
+
+      final mapsUrl =
+          "https://www.google.com/maps?q=${position.latitude},${position.longitude}";
+
+      final data = {
+        "latitude": position.latitude,
+        "longitude": position.longitude,
+        "mapsUrl": mapsUrl,
+        "status": redMode ? "RED" : "GREEN",
+        "lastUpdated": DateTime.now().toIso8601String(),
+      };
+
+      if (redMode) data["alert"] = true;
+
+      // Keyed by username
+      await _dbRef.child(username!).update(data);
+    } catch (e) {
+      debugPrint("Location update failed: $e");
+    }
   }
 
   @override
@@ -147,9 +180,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                child: const Center(
-                  child: Icon(Icons.golf_course_rounded), // placeholder logo
-                ),
+                child: const Center(child: Icon(Icons.golf_course_rounded)),
               ),
             ),
             const SizedBox(height: 20),
