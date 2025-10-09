@@ -16,7 +16,7 @@ class _MyWidgetState extends State<MyWidget> {
   @override
   void initState() {
     super.initState();
-    _loadCurrentLocation();
+    //_loadCurrentLocation();
   }
 
   @override

@@ -49,10 +49,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         // ... your existing app bar code
-        toolbarHeight:44,
+        toolbarHeight:58,
         leadingWidth:44,
       
-        leading: Padding(padding: const EdgeInsets.only(top:8.0, bottom:3.0, left:8.0, right:8.0),
+        leading: Padding(padding: const EdgeInsets.only(top:8.0, bottom:3.0, left:16.0,),
           child: SvgPicture.asset('lib/assets/icons/TrustNet-logo-only.svg',
           height: 40,
           width: 40,

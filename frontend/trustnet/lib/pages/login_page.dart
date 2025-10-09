@@ -49,8 +49,9 @@ class LoginPage extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(height: 80),
+              const Spacer(),
 
               // Placeholder Logo
               //const Icon(Icons.public, size: 100, color: Color(0xFF9D4EDD)),
@@ -77,7 +78,7 @@ class LoginPage extends StatelessWidget {
                 controller: emailController,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  hintText: 'Email ID/Mobile No',
+                  hintText: 'Email ID',
                   hintStyle: const TextStyle(color: Colors.grey),
                   filled: true,
                   fillColor: const Color(0xFF1E1E1E),
@@ -105,20 +106,11 @@ class LoginPage extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
+              
 
-              // Forgot Password (UI unchanged)
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {},
-                  child: const Text(
-                    "Forgot Password?",
-                    style: TextStyle(color: Color(0xFF9D4EDD), fontSize: 14),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
+              
+              
+              const SizedBox(height: 20),
 
               // Login Button
               SizedBox(
@@ -142,6 +134,18 @@ class LoginPage extends StatelessWidget {
                   ),
                 ),
               ),
+
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {},
+                  child: const Text(
+                    "Forgot Password?",
+                    style: TextStyle(color: Color(0xFF9D4EDD), fontSize: 14),
+                  ),
+                ),
+              ),
+
               const Spacer(),
 
               // Create Account

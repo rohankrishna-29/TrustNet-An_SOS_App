@@ -303,52 +303,52 @@ class ContactsPage extends StatelessWidget {
                       ),
                     ),
                     StreamBuilder<List<Map<String, dynamic>>>(
-  stream: service.getPendingRequests(currentUid),
-  builder: (context, snapshot) {
-    if (snapshot.hasError) {
-      debugPrint('Pending stream error: ${snapshot.error}');
-      return Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text(
-          'Error loading requests:\n${snapshot.error}',
-          style: TextStyle(color: Colors.redAccent),
-        ),
-      );
-    }
+                      stream: service.getPendingRequests(currentUid),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          debugPrint('Pending stream error: ${snapshot.error}');
+                          return Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              'Error loading requests:\n${snapshot.error}',
+                              style: TextStyle(color: Colors.redAccent),
+                            ),
+                          );
+                        }
 
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
 
-    final requests = snapshot.data ?? [];
-    if (requests.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Text('No pending requests', style: TextStyle(color: Colors.white54)),
-      );
-    }
+                        final requests = snapshot.data ?? [];
+                        if (requests.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Text('No pending requests', style: TextStyle(color: Colors.white54)),
+                          );
+                        }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: requests.length,
-      itemBuilder: (context, index) {
-        final request = requests[index];
-        return RequestTile(
-          name: request['name'] ?? request['email'] ?? 'Unknown User',
-          userId: request['userId'],
-          currentUid: currentUid,
-          service: service,
-        );
-      },
-    );
-  },
-),
+                        return ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: requests.length,
+                          itemBuilder: (context, index) {
+                            final request = requests[index];
+                            return RequestTile(
+                              name: request['name'] ?? request['email'] ?? 'Unknown User',
+                              userId: request['userId'],
+                              currentUid: currentUid,
+                              service: service,
+                            );
+                          },
+                        );
+                      },
+                    ),
 
                     const SizedBox(height: 24),
 
@@ -367,51 +367,51 @@ class ContactsPage extends StatelessWidget {
                       ),
                     ),
                     StreamBuilder<List<Map<String, dynamic>>>(
-  stream: service.getAcceptedConnections(currentUid),
-  builder: (context, snapshot) {
-    if (snapshot.hasError) {
-      debugPrint('Accepted stream error: ${snapshot.error}');
-      return Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text(
-          'Error loading connections:\n${snapshot.error}',
-          style: TextStyle(color: Colors.redAccent),
-        ),
-      );
-    }
+                      stream: service.getAcceptedConnections(currentUid),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          debugPrint('Accepted stream error: ${snapshot.error}');
+                          return Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              'Error loading connections:\n${snapshot.error}',
+                              style: TextStyle(color: Colors.redAccent),
+                            ),
+                          );
+                        }
 
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
 
-    final connections = snapshot.data ?? [];
-    if (connections.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Text('No connections yet', style: TextStyle(color: Colors.white54)),
-      );
-    }
+                        final connections = snapshot.data ?? [];
+                        if (connections.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Text('No connections yet', style: TextStyle(color: Colors.white54)),
+                          );
+                        }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: connections.length,
-      itemBuilder: (context, index) {
-        final contact = connections[index];
-        return ConnectionsTile(
-          name: contact['name'] ?? contact['email'] ?? 'Unknown Contact',
-          status: contact['alertStatus'] ?? 'green',
-          onMapPressed: () {},
-        );
-      },
-    );
-  },
-),
+                        return ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: connections.length,
+                          itemBuilder: (context, index) {
+                            final contact = connections[index];
+                            return ConnectionsTile(
+                              name: contact['name'] ?? contact['email'] ?? 'Unknown Contact',
+                              status: contact['alertStatus'] ?? 'green',
+                              onMapPressed: () {},
+                            );
+                          },
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
