@@ -100,7 +100,7 @@ class ConnectionsService {
   }
 
   /// 🔹 Stream of pending requests
-  Stream<List<Map<String, dynamic>>> getPendingRequests(String currentUid) {
+  Stream<List<Map<String, dynamic>>> getPendingRequests(String currentUid) async* {
     final ref = _firestore
         .collection('users')
         .doc(currentUid)
@@ -109,11 +109,29 @@ class ConnectionsService {
         .orderBy('timestamp', descending: true)
         .snapshots();
 
-    return ref.map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+    await for (final snapshot in ref) {
+      final List<Map<String, dynamic>> results = [];
+
+      for (final doc in snapshot.docs) {
+        final contactUid = doc.id; // each trusted_contact doc's ID is the userId
+        final userDoc = await _firestore.collection('users').doc(contactUid).get();
+
+        results.add({
+          'userId': contactUid,
+          'name': userDoc.data()?['name'] ?? 'Unknown User',
+          'email': userDoc.data()?['email'],
+          'status': doc.data()['status'],
+          'timestamp': doc.data()['timestamp'],
+        });
+      }
+
+      yield results;
+    }
   }
 
+
   /// 🔹 Stream of accepted connections
-  Stream<List<Map<String, dynamic>>> getAcceptedConnections(String currentUid) {
+  Stream<List<Map<String, dynamic>>> getAcceptedConnections(String currentUid) async* {
     final ref = _firestore
         .collection('users')
         .doc(currentUid)
@@ -122,6 +140,25 @@ class ConnectionsService {
         .orderBy('timestamp', descending: true)
         .snapshots();
 
-    return ref.map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+    await for (final snapshot in ref) {
+      final List<Map<String, dynamic>> results = [];
+
+      for (final doc in snapshot.docs) {
+        final contactUid = doc.id; // 👈 the UID of the connected user
+        final userDoc = await _firestore.collection('users').doc(contactUid).get();
+
+        results.add({
+          'userId': contactUid,
+          'name': userDoc.data()?['name'] ?? 'Unknown Contact',
+          'email': userDoc.data()?['email'],
+          'alertStatus': doc.data()['alertStatus'] ?? 'green',
+          'status': doc.data()['status'],
+          'timestamp': doc.data()['timestamp'],
+        });
+      }
+
+      yield results;
+    }
   }
+
 }
