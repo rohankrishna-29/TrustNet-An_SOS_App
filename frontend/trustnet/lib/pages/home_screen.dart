@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight:56,
+        toolbarHeight:58,
         leadingWidth:44,
       
         leading: Padding(padding: const EdgeInsets.only(top:8.0, bottom:3.0, left:8.0, right:8.0),
