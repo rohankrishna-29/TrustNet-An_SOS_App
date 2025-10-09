@@ -11,6 +11,7 @@ class LoginPage extends StatelessWidget {
     // Controllers to capture email and password
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
+    bool obscurePassword = true;
 
     // Firebase login function
     void loginUser() async {
@@ -62,15 +63,7 @@ class LoginPage extends StatelessWidget {
                     ),
               const SizedBox(height: 8),
 
-              /*const Text(
-                "TRUSTNET",
-                style: TextStyle(
-                  color: Color(0xFF9D4EDD),
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
-                ),
-              ),*/
+              
               const SizedBox(height: 60),
 
               // Email Field
@@ -91,21 +84,40 @@ class LoginPage extends StatelessWidget {
               const SizedBox(height: 16),
 
               // Password Field
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Password',
-                  hintStyle: const TextStyle(color: Colors.grey),
-                  filled: true,
-                  fillColor: const Color(0xFF1E1E1E),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
+              // Password Field with visibility toggle
+              
+StatefulBuilder(
+  builder: (context, setState) {
+
+    return TextField(
+      controller: passwordController,
+      obscureText: obscurePassword,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        hintText: 'Password',
+        hintStyle: const TextStyle(color: Colors.grey),
+        filled: true,
+        fillColor: const Color(0xFF1E1E1E),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide.none,
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(
+            obscurePassword ? Icons.visibility_off : Icons.visibility,
+            color: Colors.grey,
+          ),
+          onPressed: () {
+            setState(() {
+              obscurePassword = !obscurePassword;
+            });
+          },
+        ),
+      ),
+    );
+  },
+),
+
               
 
               

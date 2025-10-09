@@ -5,7 +5,7 @@ class SendRequestButton extends StatelessWidget {
   final String currentUid;
   final ConnectionsService service;
 
-  const SendRequestButton({
+  const SendRequestButton({super.key, 
     required this.currentUid,
     required this.service,
   });

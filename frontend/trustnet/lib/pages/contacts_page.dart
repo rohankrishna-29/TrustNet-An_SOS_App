@@ -273,7 +273,7 @@ class ContactsPage extends StatelessWidget {
   final String currentUid;
   final ConnectionsService service = ConnectionsService();
 
-  ContactsPage({required this.currentUid});
+  ContactsPage({super.key, required this.currentUid});
 
   @override
   Widget build(BuildContext context) {

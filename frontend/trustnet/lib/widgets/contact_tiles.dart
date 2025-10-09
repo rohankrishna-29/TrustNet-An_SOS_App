@@ -9,7 +9,7 @@ class ConnectionsTile extends StatelessWidget {
   final String status; // 'green', 'red', 'yellow'
   final VoidCallback? onMapPressed;
 
-  ConnectionsTile({
+  const ConnectionsTile({super.key, 
     required this.name,
     required this.status,
     this.onMapPressed,
@@ -69,7 +69,7 @@ class RequestTile extends StatelessWidget {
   final String currentUid;
   final ConnectionsService service;
 
-  RequestTile({
+  const RequestTile({super.key, 
     required this.name,
     required this.userId,
     required this.currentUid,
