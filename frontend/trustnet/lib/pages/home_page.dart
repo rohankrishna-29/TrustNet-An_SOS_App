@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -19,6 +20,7 @@ class _HomePageState extends State<HomePage> {
   Timer? _locationTimer;
   String? username; // For readable DB entries
   Position? _lastPosition;
+  bool redMode=false;
 
   final Map<String, Color> statusColors = {
     "OFF": Colors.grey,
@@ -86,7 +88,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _startLiveLocation({bool redMode = false}) {
+  void _startLiveLocation({redMode = false}) {
     _locationTimer?.cancel();
     _locationTimer = Timer.periodic(const Duration(seconds: 20), (_) async {
       await _updateLocationInDB(redMode: redMode);
@@ -105,7 +107,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Future<void> _updateLocationInDB({bool redMode = false}) async {
+  Future<void> _updateLocationInDB({ redMode = false}) async {
     if (username == null) return;
 
     try {
@@ -180,7 +182,11 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                child: const Center(child: Icon(Icons.golf_course_rounded)),
+                child: Center(child: SvgPicture.asset("lib/assets/icons/TrustNet-logo-only.svg",
+                  width: 150,
+                  height: 150,
+                  colorFilter: ColorFilter.mode(status=="GREEN" ? Colors.green : status=="RED" ? Colors.red: Colors.grey, BlendMode.srcIn)
+                    ,)),
               ),
             ),
             const SizedBox(height: 20),

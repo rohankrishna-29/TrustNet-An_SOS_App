@@ -32,7 +32,7 @@ dependencies:
     sdk: flutter
 
   flutter_svg: ^2.2.1
-
+  google_maps_flutter: ^2.13.1
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -50,6 +50,7 @@ dependencies:
  
 
 dev_dependencies:
+  flutter_launcher_icons: ^0.14.2
   flutter_test:
     sdk: flutter
 
@@ -59,7 +60,10 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-
+flutter_launcher_icons:
+    android: true
+    ios: true
+    image_path: "lib/assets/icons/TrustNet-logo-only.png"
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
