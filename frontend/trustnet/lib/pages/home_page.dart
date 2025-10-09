@@ -20,6 +20,7 @@ class _HomePageState extends State<HomePage> {
   Timer? _locationTimer;
   String? username; // For readable DB entries
   Position? _lastPosition;
+  bool redMode=false;
 
   final Map<String, Color> statusColors = {
     "OFF": Colors.grey,
@@ -87,7 +88,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _startLiveLocation({bool redMode = false}) {
+  void _startLiveLocation({redMode = false}) {
     _locationTimer?.cancel();
     _locationTimer = Timer.periodic(const Duration(seconds: 20), (_) async {
       await _updateLocationInDB(redMode: redMode);
@@ -106,7 +107,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Future<void> _updateLocationInDB({bool redMode = false}) async {
+  Future<void> _updateLocationInDB({ redMode = false}) async {
     if (username == null) return;
 
     try {
@@ -184,7 +185,7 @@ class _HomePageState extends State<HomePage> {
                 child: Center(child: SvgPicture.asset("lib/assets/icons/TrustNet-logo-only.svg",
                   width: 150,
                   height: 150,
-                  colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn)
+                  colorFilter: ColorFilter.mode(status=="GREEN" ? Colors.green : status=="RED" ? Colors.red: Colors.grey, BlendMode.srcIn)
                     ,)),
               ),
             ),
