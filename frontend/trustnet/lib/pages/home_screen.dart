@@ -58,7 +58,13 @@ class _HomeScreenState extends State<HomeScreen> {
           width: 40,
           ),
         ),
-        title: Text("TrustNet"),
+        title: AnimatedSwitcher(
+    duration: const Duration(milliseconds: 100),
+    child: Text(
+      _titles[_selectedIndex],
+      key: ValueKey(_titles[_selectedIndex]),
+    ),
+  ),
         centerTitle: true,
         elevation: 4,
         actions: [
