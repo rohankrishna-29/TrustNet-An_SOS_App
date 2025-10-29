@@ -18,6 +18,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String status = "OFF";
   Timer? _locationTimer;
+  String? userId;
   String? username; 
   Position? _lastPosition;
   bool redMode=false;
@@ -46,16 +47,18 @@ class _HomePageState extends State<HomePage> {
 
   // Fetch username from Firestore for Realtime DB readability
   Future<void> _fetchUsername() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
+    final user = FirebaseAuth.instance.currentUser;
+    if(user == null) return;
+
+    userId = user.uid;
 
     try {
       final doc = await FirebaseFirestore.instance
           .collection('users')
-          .doc(uid)
+          .doc(userId)
           .get();
       setState(() {
-        username = doc.data()?['name'] ?? uid;
+        username = doc.data()?['name'] ?? userId;
       });
     } catch (e) {
       debugPrint("Error fetching username: $e");
@@ -99,9 +102,8 @@ class _HomePageState extends State<HomePage> {
     _locationTimer?.cancel();
     _locationTimer = null;
 
-    if (username == null) return;
-
-    await _dbRef.child(username!).update({
+    if (userId == null) return;
+    await _dbRef.child(userId!).update({
       "status": "OFF",
       "lastUpdated": DateTime.now().toIso8601String(),
     });
@@ -143,7 +145,8 @@ class _HomePageState extends State<HomePage> {
       if (redMode) data["alert"] = true;
 
       // Keyed by username
-      await _dbRef.child(username!).update(data);
+      if(userId == null) return;
+      await _dbRef.child(userId!).update(data);
     } catch (e) {
       debugPrint("Location update failed: $e");
     }

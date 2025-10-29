@@ -40,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _pages = [
       HomePage(),
       ContactsPage(currentUid: currentUid), 
-      SOSMapPage(),
+      SOSMapPage(currentUserId: currentUid,),
       ProfilePage()
     ];
   }

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:trustnet/services/location_service.dart'; // 👈 update this import
 
 class SOSMapPage extends StatefulWidget {
-  const SOSMapPage({super.key});
+  final String currentUserId; // 🔹 pass the current user’s ID to know whose contacts to fetch
+  const SOSMapPage({required this.currentUserId, super.key});
 
   @override
   State<SOSMapPage> createState() => _SOSMapPageState();
@@ -12,12 +14,31 @@ class SOSMapPage extends StatefulWidget {
 
 class _SOSMapPageState extends State<SOSMapPage> {
   final MapController _mapController = MapController();
+  final LocationService _locationService = LocationService();
 
-  // example live user data — you’ll later replace this with Firebase data
-  final List<Map<String, dynamic>> users = [
-    {'name': 'Aditi', 'lat': 12.9716, 'lng': 77.5946},  // Bengaluru
-    {'name': 'Rohan', 'lat': 13.0827, 'lng': 80.2707},  // Chennai
-  ];
+  /// This will hold the real-time updated contact locations
+  final Map<String, Map<String, dynamic>> _contactLocations = {};
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Step 1: Start listening to trusted contacts
+    _locationService.subscribeToTrustedContacts(widget.currentUserId);
+
+    // Step 2: Listen to incoming updates
+    _locationService.contactUpdatesStream.listen((update) {
+      setState(() {
+        _contactLocations[update['userId']] = update;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _locationService.dispose();
+    super.dispose();
+  }
 
   Future<void> _launchMaps(double lat, double lng) async {
     final url = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
@@ -32,27 +53,42 @@ class _SOSMapPageState extends State<SOSMapPage> {
       body: FlutterMap(
         mapController: _mapController,
         options: MapOptions(
-          initialCenter: LatLng(12.9716, 77.5946),
-          initialZoom: 15.0,
+          initialCenter: const LatLng(12.9716, 77.5946),
+          initialZoom: 13.0,
         ),
         children: [
-          // Base map layer (tiles)
+          // 🔹 Base map tiles
           TileLayer(
             urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            subdomains: const ['a', 'b', 'c'],
-            userAgentPackageName: 'com.example.sosapp', // replace with your package name
+            userAgentPackageName: 'com.example.sosapp',
           ),
 
-          // Marker layer
+          // 🔹 Markers for each contact
           MarkerLayer(
-            markers: users.map((user) {
+            markers: _contactLocations.values.map((contact) {
+              final lat = contact['latitude'];
+              final lng = contact['longitude'];
+              final status = contact['status'];
+
+              // Pick color based on status (optional)
+              Color pinColor;
+              switch (status) {
+                case 'GREEN': pinColor = Colors.green;
+                  break;
+                case 'YELLOW': pinColor = Colors.amber;
+                  break;
+                case 'RED': pinColor = Colors.red;
+                  break;
+                default: pinColor = Colors.grey;
+              }
+
               return Marker(
-                width: 50,
-                height: 50,
-                point: LatLng(user['lat'], user['lng']),
+                width: 60,
+                height: 60,
+                point: LatLng(lat, lng),
                 child: GestureDetector(
-                  onTap: () => _launchMaps(user['lat'], user['lng']),
-                  child: const Icon(Icons.location_pin, color: Colors.red, size: 52),
+                  onTap: () => _launchMaps(lat, lng),
+                  child: Icon(Icons.location_pin, color: pinColor, size: 52),
                 ),
               );
             }).toList(),
