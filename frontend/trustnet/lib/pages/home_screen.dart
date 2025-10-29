@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trustnet/pages/contacts_page.dart';
 import 'package:trustnet/pages/home_page.dart';
+import 'package:trustnet/pages/map_page.dart';
 import 'package:trustnet/pages/profile_page.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<String> _titles = [
     "TrustNet",
     "Trusted Contacts",
-    "Maps",
+    "Map",
     "Profile"
   ];
 
@@ -39,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _pages = [
       HomePage(),
       ContactsPage(currentUid: currentUid), 
-      Center(child: Text("Maps page to come here")),
+      SOSMapPage(),
       ProfilePage()
     ];
   }
