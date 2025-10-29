@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -6,7 +7,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:record/record.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,6 +24,8 @@ class _HomePageState extends State<HomePage> {
   String? username; 
   Position? _lastPosition;
   bool redMode=false;
+  final AudioRecorder _recorder=AudioRecorder();
+  String? _recordingPath;
 
   final Map<String, Color> statusColors = {
     "OFF": Colors.grey,
@@ -41,6 +46,7 @@ class _HomePageState extends State<HomePage> {
     ).ref().child("users");
 
     _requestLocationPermission();
+   // _requestMicPermission();
     _fetchUsername();
   }
 
@@ -72,6 +78,16 @@ class _HomePageState extends State<HomePage> {
       }
     }
   }
+  //Request mic permission
+/*  Future<void> _requestMicPermission() async {
+  final status = await Permission.microphone.status;
+  if (!status.isGranted) {
+    final result = await Permission.microphone.request();
+    if (!result.isGranted) {
+      debugPrint("Microphone permission denied.");
+    }
+  }
+}*/
 
   void toggleStatus() {
     setState(() {
@@ -81,9 +97,11 @@ class _HomePageState extends State<HomePage> {
       } else if (status == "GREEN") {
         status = "RED";
         _startLiveLocation(redMode: true);
+        _startRecording();
       } else if (status == "RED") {
         status = "OFF";
         _stopLiveLocation();
+        _stopRecording();
       }
     });
   }
@@ -148,6 +166,35 @@ class _HomePageState extends State<HomePage> {
       debugPrint("Location update failed: $e");
     }
   }
+  Future<void> _startRecording() async {
+  try {
+    // Check permission
+    if (await _recorder.hasPermission()) {
+      final extDir = Directory('/storage/emulated/0/Music'); 
+      final filePath =
+          '${extDir.path}/trustnet_recording_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
+      await _recorder.start(const RecordConfig(), path: filePath);
+      _recordingPath = filePath;
+
+      debugPrint("Recording started at: $filePath");
+    } else {
+      debugPrint("Mic permission not granted.");
+    }
+  } catch (e) {
+    debugPrint("Error starting recording: $e");
+  }
+}
+
+Future<void> _stopRecording() async {
+  try {
+    final path = await _recorder.stop();
+    debugPrint("Recording stopped. File saved at: $path");
+  } catch (e) {
+    debugPrint("Error stopping recording: $e");
+  }
+}
+
 
   @override
   void dispose() {
