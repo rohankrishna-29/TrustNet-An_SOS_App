@@ -18,7 +18,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String status = "OFF";
   Timer? _locationTimer;
-  String? username; // For readable DB entries
+  String? username; 
   Position? _lastPosition;
   bool redMode=false;
 
@@ -117,7 +117,7 @@ class _HomePageState extends State<HomePage> {
         ),
       );
 
-      // Skip update if user hasn't moved significantly (optional)
+      // Skip update if user hasn't moved significantly
       if (_lastPosition != null) {
         final distance = Geolocator.distanceBetween(
           _lastPosition!.latitude,

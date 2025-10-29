@@ -3,8 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class ConnectionsService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// 🔹 Get a user's UID by their email
-  /// Returns null if user not found
+  //Get a user's UID by their email
+  //Returns null if user not found
   Future<String?> getUserIdByEmail(String email) async {
     try {
       final query = await _firestore
@@ -14,7 +14,7 @@ class ConnectionsService {
           .get();
 
       if (query.docs.isNotEmpty) {
-        return query.docs.first.id; // document ID = user UID
+        return query.docs.first.id; 
       } else {
         return null;
       }
@@ -24,7 +24,7 @@ class ConnectionsService {
     }
   }
 
-  /// 🔹 Send a connection request using target email
+  // Send a connection request using target email
   Future<void> sendConnectionRequest(String currentUid, String targetEmail) async {
     final targetUid = await getUserIdByEmail(targetEmail);
     if (targetUid == null) throw Exception('User not found for $targetEmail');
@@ -59,7 +59,7 @@ class ConnectionsService {
     });
   }
 
-  /// 🔹 Accept a connection request
+  // Accept a connection request
   Future<void> acceptConnectionRequest(String currentUid, String otherUid) async {
     final currentRef = _firestore
         .collection('users')
@@ -79,7 +79,7 @@ class ConnectionsService {
     });
   }
 
-  /// 🔹 Reject or cancel a connection request
+  // Reject or cancel a connection request
   Future<void> rejectConnectionRequest(String currentUid, String otherUid) async {
     final currentRef = _firestore
         .collection('users')
@@ -99,7 +99,7 @@ class ConnectionsService {
     });
   }
 
-  /// 🔹 Stream of pending requests
+  //Stream of pending requests
   Stream<List<Map<String, dynamic>>> getPendingRequests(String currentUid) async* {
     final ref = _firestore
         .collection('users')
@@ -130,7 +130,7 @@ class ConnectionsService {
   }
 
 
-  /// 🔹 Stream of accepted connections
+  //Stream of accepted connections
   Stream<List<Map<String, dynamic>>> getAcceptedConnections(String currentUid) async* {
     final ref = _firestore
         .collection('users')
@@ -144,7 +144,7 @@ class ConnectionsService {
       final List<Map<String, dynamic>> results = [];
 
       for (final doc in snapshot.docs) {
-        final contactUid = doc.id; // 👈 the UID of the connected user
+        final contactUid = doc.id; // the UID of the connected user
         final userDoc = await _firestore.collection('users').doc(contactUid).get();
 
         results.add({

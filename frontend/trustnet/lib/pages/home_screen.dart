@@ -16,9 +16,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  late final String currentUid; // <-- add this
+  late final String currentUid; 
 
-  late final List<Widget> _pages; // <-- change to late so we can initialize after fetching UID
+  late final List<Widget> _pages; 
 
   final List<String> _titles = [
     "TrustNet",
@@ -38,8 +38,8 @@ class _HomeScreenState extends State<HomeScreen> {
     // Initialize pages with currentUid passed to ContactsPage
     _pages = [
       HomePage(),
-      ContactsPage(currentUid: currentUid), // <-- pass UID here
-      Center(child: Text("Maps page")),
+      ContactsPage(currentUid: currentUid), 
+      Center(child: Text("Maps page to come here")),
       ProfilePage()
     ];
   }
@@ -48,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // ... your existing app bar code
+
         toolbarHeight:58,
         leadingWidth:44,
       

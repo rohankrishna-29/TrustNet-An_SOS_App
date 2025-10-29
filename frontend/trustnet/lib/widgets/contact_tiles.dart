@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/trusted_contacts_services.dart';
 
-/// ----------------------------
 /// CONNECTIONS TILE
-/// ----------------------------
 class ConnectionsTile extends StatelessWidget {
   final String name;
-  final String status; // 'green', 'red', 'yellow'
+  final String status; 
   final VoidCallback? onMapPressed;
 
   const ConnectionsTile({super.key, 
@@ -60,9 +58,8 @@ class ConnectionsTile extends StatelessWidget {
   }
 }
 
-/// ----------------------------
+
 /// REQUEST TILE
-/// ----------------------------
 class RequestTile extends StatelessWidget {
   final String name;
   final String userId;

@@ -54,9 +54,7 @@ class LoginPage extends StatelessWidget {
             children: [
               const Spacer(),
 
-              // Placeholder Logo
-              //const Icon(Icons.public, size: 100, color: Color(0xFF9D4EDD)),
-              SvgPicture.asset(
+              SvgPicture.asset(  // app icon
                       'lib/assets/icons/TrustNet-logo+text.svg',
                         width: 100,
                         height: 100,
@@ -83,7 +81,6 @@ class LoginPage extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // Password Field
               // Password Field with visibility toggle
               
 StatefulBuilder(

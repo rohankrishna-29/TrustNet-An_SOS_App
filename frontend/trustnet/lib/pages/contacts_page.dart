@@ -288,9 +288,7 @@ class ContactsPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // -----------------------------
-                    // Pending Requests Section
-                    // -----------------------------
+                  
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: Text(
@@ -352,9 +350,6 @@ class ContactsPage extends StatelessWidget {
 
                     const SizedBox(height: 24),
 
-                    // -----------------------------
-                    // Accepted Connections Section
-                    // -----------------------------
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: Text(
@@ -417,9 +412,7 @@ class ContactsPage extends StatelessWidget {
               ),
             ),
 
-            // -----------------------------
             // Send Request Button
-            // -----------------------------
             SendRequestButton(
               currentUid: currentUid,
               service: service,
