@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -6,7 +7,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:record/record.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,9 +21,12 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String status = "OFF";
   Timer? _locationTimer;
-  String? username; // For readable DB entries
+  String? userId;
+  String? username; 
   Position? _lastPosition;
   bool redMode=false;
+  final AudioRecorder _recorder=AudioRecorder();
+  String? _recordingPath;
 
   final Map<String, Color> statusColors = {
     "OFF": Colors.grey,
@@ -41,21 +47,24 @@ class _HomePageState extends State<HomePage> {
     ).ref().child("users");
 
     _requestLocationPermission();
+   // _requestMicPermission();
     _fetchUsername();
   }
 
   // Fetch username from Firestore for Realtime DB readability
   Future<void> _fetchUsername() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
+    final user = FirebaseAuth.instance.currentUser;
+    if(user == null) return;
+
+    userId = user.uid;
 
     try {
       final doc = await FirebaseFirestore.instance
           .collection('users')
-          .doc(uid)
+          .doc(userId)
           .get();
       setState(() {
-        username = doc.data()?['name'] ?? uid;
+        username = doc.data()?['name'] ?? userId;
       });
     } catch (e) {
       debugPrint("Error fetching username: $e");
@@ -72,6 +81,16 @@ class _HomePageState extends State<HomePage> {
       }
     }
   }
+  //Request mic permission
+/*  Future<void> _requestMicPermission() async {
+  final status = await Permission.microphone.status;
+  if (!status.isGranted) {
+    final result = await Permission.microphone.request();
+    if (!result.isGranted) {
+      debugPrint("Microphone permission denied.");
+    }
+  }
+}*/
 
   void toggleStatus() {
     setState(() {
@@ -81,9 +100,11 @@ class _HomePageState extends State<HomePage> {
       } else if (status == "GREEN") {
         status = "RED";
         _startLiveLocation(redMode: true);
+        _startRecording();
       } else if (status == "RED") {
         status = "OFF";
         _stopLiveLocation();
+        _stopRecording();
       }
     });
   }
@@ -99,9 +120,8 @@ class _HomePageState extends State<HomePage> {
     _locationTimer?.cancel();
     _locationTimer = null;
 
-    if (username == null) return;
-
-    await _dbRef.child(username!).update({
+    if (userId == null) return;
+    await _dbRef.child(userId!).update({
       "status": "OFF",
       "lastUpdated": DateTime.now().toIso8601String(),
     });
@@ -117,7 +137,7 @@ class _HomePageState extends State<HomePage> {
         ),
       );
 
-      // Skip update if user hasn't moved significantly (optional)
+      // Skip update if user hasn't moved significantly
       if (_lastPosition != null) {
         final distance = Geolocator.distanceBetween(
           _lastPosition!.latitude,
@@ -143,11 +163,41 @@ class _HomePageState extends State<HomePage> {
       if (redMode) data["alert"] = true;
 
       // Keyed by username
-      await _dbRef.child(username!).update(data);
+      if(userId == null) return;
+      await _dbRef.child(userId!).update(data);
     } catch (e) {
       debugPrint("Location update failed: $e");
     }
   }
+  Future<void> _startRecording() async {
+  try {
+    // Check permission
+    if (await _recorder.hasPermission()) {
+      final extDir = Directory('/storage/emulated/0/Music'); 
+      final filePath =
+          '${extDir.path}/trustnet_recording_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
+      await _recorder.start(const RecordConfig(), path: filePath);
+      _recordingPath = filePath;
+
+      debugPrint("Recording started at: $filePath");
+    } else {
+      debugPrint("Mic permission not granted.");
+    }
+  } catch (e) {
+    debugPrint("Error starting recording: $e");
+  }
+}
+
+Future<void> _stopRecording() async {
+  try {
+    final path = await _recorder.stop();
+    debugPrint("Recording stopped. File saved at: $path");
+  } catch (e) {
+    debugPrint("Error stopping recording: $e");
+  }
+}
+
 
   @override
   void dispose() {

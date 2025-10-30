@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; // ✅ required for Firebase config
+import 'firebase_options.dart'; //required for Firebase config
 import 'package:trustnet/pages/login_page.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // ✅ ensures plugin binding
+  WidgetsFlutterBinding.ensureInitialized(); //ensures plugin binding
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform, // ✅ initialize Firebase
+    options: DefaultFirebaseOptions.currentPlatform, // initialize Firebase
   );
 
-  runApp(const MyApp()); // ✅ run app only after Firebase is ready
+  runApp(const MyApp()); // run app only after Firebase is ready
 }
 
 class MyApp extends StatelessWidget {
@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
       ),
 
       themeMode: ThemeMode.dark,
-      home: const LoginPage(), // ✅ unchanged
+      home: const LoginPage(), 
     );
   }
 }

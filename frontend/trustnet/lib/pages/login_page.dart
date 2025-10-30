@@ -11,6 +11,7 @@ class LoginPage extends StatelessWidget {
     // Controllers to capture email and password
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
+    bool obscurePassword = true;
 
     // Firebase login function
     void loginUser() async {
@@ -49,27 +50,18 @@ class LoginPage extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(height: 80),
+              const Spacer(),
 
-              // Placeholder Logo
-              //const Icon(Icons.public, size: 100, color: Color(0xFF9D4EDD)),
-              SvgPicture.asset(
+              SvgPicture.asset(  // app icon
                       'lib/assets/icons/TrustNet-logo+text.svg',
                         width: 100,
                         height: 100,
                     ),
               const SizedBox(height: 8),
 
-              /*const Text(
-                "TRUSTNET",
-                style: TextStyle(
-                  color: Color(0xFF9D4EDD),
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
-                ),
-              ),*/
+              
               const SizedBox(height: 60),
 
               // Email Field
@@ -77,7 +69,7 @@ class LoginPage extends StatelessWidget {
                 controller: emailController,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  hintText: 'Email ID/Mobile No',
+                  hintText: 'Email ID',
                   hintStyle: const TextStyle(color: Colors.grey),
                   filled: true,
                   fillColor: const Color(0xFF1E1E1E),
@@ -89,36 +81,45 @@ class LoginPage extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // Password Field
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Password',
-                  hintStyle: const TextStyle(color: Colors.grey),
-                  filled: true,
-                  fillColor: const Color(0xFF1E1E1E),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
+              // Password Field with visibility toggle
+              
+StatefulBuilder(
+  builder: (context, setState) {
 
-              // Forgot Password (UI unchanged)
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {},
-                  child: const Text(
-                    "Forgot Password?",
-                    style: TextStyle(color: Color(0xFF9D4EDD), fontSize: 14),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
+    return TextField(
+      controller: passwordController,
+      obscureText: obscurePassword,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        hintText: 'Password',
+        hintStyle: const TextStyle(color: Colors.grey),
+        filled: true,
+        fillColor: const Color(0xFF1E1E1E),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide.none,
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(
+            obscurePassword ? Icons.visibility_off : Icons.visibility,
+            color: Colors.grey,
+          ),
+          onPressed: () {
+            setState(() {
+              obscurePassword = !obscurePassword;
+            });
+          },
+        ),
+      ),
+    );
+  },
+),
+
+              
+
+              
+              
+              const SizedBox(height: 20),
 
               // Login Button
               SizedBox(
@@ -142,6 +143,18 @@ class LoginPage extends StatelessWidget {
                   ),
                 ),
               ),
+
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {},
+                  child: const Text(
+                    "Forgot Password?",
+                    style: TextStyle(color: Color(0xFF9D4EDD), fontSize: 14),
+                  ),
+                ),
+              ),
+
               const Spacer(),
 
               // Create Account
