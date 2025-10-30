@@ -5,6 +5,9 @@ import 'package:trustnet/pages/map_page.dart';
 import 'package:trustnet/pages/profile_page.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:trustnet/utils/file_utils.dart';
+
+
 
 
 class HomeScreen extends StatefulWidget {
@@ -27,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
     "Map",
     "Profile"
   ];
+
 
   @override
   void initState() {
@@ -69,7 +73,13 @@ class _HomeScreenState extends State<HomeScreen> {
         centerTitle: true,
         elevation: 4,
         actions: [
-          PopupMenuButton(itemBuilder: (context) =>  [
+          PopupMenuButton(
+            onSelected: (value) async {
+              if(value ==  'recording_dir'){
+                await FileUtils.openRecordingsFolder();
+              }
+            },
+            itemBuilder: (context) =>  [
             PopupMenuItem(
               value: 1, 
               child: Row(
@@ -80,11 +90,11 @@ class _HomeScreenState extends State<HomeScreen> {
               )
             ),
             PopupMenuItem(
-              value: 2, 
+              value: 'recording_dir', 
               child: Row(
                 children: [
-                  Icon(Icons.upload),
-                  Text("Uploaded media"),
+                  Icon(Icons.record_voice_over),
+                  Text("Recorded evidence"),
                 ],
               )
             ),
@@ -121,108 +131,4 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 
-/*
-class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    HomePage(),
-    ContactsPage(),
-    Center(child: Text("Maps page"),),
-    ProfilePage()
-  ];
-
-  final List<String> _titles = [
-    "TrustNet",
-    "Trusted Contacts",
-    "Maps",
-    "Profile"
-  ];
-
-  /*void _onItemTapped(int index){
-    setState(() {
-      _selectedIndex = index;
-    });
-  }*/
-
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        toolbarHeight:58,
-        leadingWidth:44,
-      
-        leading: Padding(padding: const EdgeInsets.only(top:8.0, bottom:3.0, left:8.0, right:8.0),
-          child: SvgPicture.asset('lib/assets/icons/TrustNet-logo-only.svg',
-          height: 40,
-          width: 40,
-          ),
-        ),
-        title: Text("TrustNet"),
-        centerTitle: true,
-        elevation: 4,
-        actions: [
-          PopupMenuButton(itemBuilder: (context) =>  [
-            PopupMenuItem(
-              value: 1, 
-              child: Row(
-                children: [
-                  Icon(Icons.settings),
-                  Text("Settings"),
-                ],
-              )
-            ),
-            PopupMenuItem(
-              value: 2, 
-              child: Row(
-                children: [
-                  Icon(Icons.upload),
-                  Text("Uploaded media"),
-                ],
-              )
-            ),
-            PopupMenuItem(
-              value: 3, 
-              child: Row(
-                children: [
-                  Icon(Icons.history),
-                  Text("History")
-                ],
-              )
-            ),
-          ],
-          )
-        ],
-      ),
-      body: _pages[_selectedIndex],
-      /*bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white,
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.green,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.contacts), label: 'Contacts'),
-          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'You'),
-        ]
-      ),*/
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        destinations: [
-          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.contacts), label: 'Contacts'),
-          NavigationDestination(icon: Icon(Icons.map), label: 'Map'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'You'),
-        ]),
-    );
-  }
-}
-*/
