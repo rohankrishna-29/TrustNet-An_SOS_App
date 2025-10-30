@@ -1,13 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:trustnet/services/trusted-contacts-service.dart';
+import 'package:trustnet/services/notification-service.dart';
 import 'firebase_options.dart'; //required for Firebase config
 import 'package:trustnet/pages/login_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); //ensures plugin binding
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform, // initialize Firebase
   );
+
+  final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+  // Initialize services only if user is logged in
+  if (currentUid.isNotEmpty) {
+    final contactsService = TrustedContactsService();
+    final notificationService = NotificationService(contactsService);
+
+    await contactsService.subscribeToTrustedContacts(currentUid);
+    await notificationService.initialize();
+  }
+
 
   runApp(const MyApp()); // run app only after Firebase is ready
 }
