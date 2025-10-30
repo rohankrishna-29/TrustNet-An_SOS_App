@@ -7,7 +7,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 
@@ -169,34 +168,42 @@ class _HomePageState extends State<HomePage> {
       debugPrint("Location update failed: $e");
     }
   }
+
+
   Future<void> _startRecording() async {
-  try {
-    // Check permission
-    if (await _recorder.hasPermission()) {
-      final extDir = Directory('/storage/emulated/0/Music'); 
-      final filePath =
-          '${extDir.path}/trustnet_recording_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    try {
+      if (await _recorder.hasPermission()) {
+        // Request MANAGE_EXTERNAL_STORAGE permission for Android 11+
+        PermissionStatus status = await Permission.manageExternalStorage.request();
+        
+        if (status.isGranted || await Permission.storage.isGranted) {
+          final trustnetDir = Directory('/storage/emulated/0/Music/TrustNet');
+          await trustnetDir.create(recursive: true);
+          
+          final filePath =
+              '${trustnetDir.path}/trustnet_recording_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
-      await _recorder.start(const RecordConfig(), path: filePath);
-      _recordingPath = filePath;
-
-      debugPrint("Recording started at: $filePath");
-    } else {
-      debugPrint("Mic permission not granted.");
+          await _recorder.start(const RecordConfig(), path: filePath);
+          debugPrint("Recording started at: $filePath");
+        } else {
+          debugPrint("Storage permission denied");
+        }
+      }
+    } catch (e) {
+      debugPrint("Error starting recording: $e");
     }
-  } catch (e) {
-    debugPrint("Error starting recording: $e");
   }
-}
 
-Future<void> _stopRecording() async {
-  try {
-    final path = await _recorder.stop();
-    debugPrint("Recording stopped. File saved at: $path");
-  } catch (e) {
-    debugPrint("Error stopping recording: $e");
+
+
+  Future<void> _stopRecording() async {
+    try {
+      final path = await _recorder.stop();
+      debugPrint("Recording stopped. File saved at: $path");
+    } catch (e) {
+      debugPrint("Error stopping recording: $e");
+    }
   }
-}
 
 
   @override
