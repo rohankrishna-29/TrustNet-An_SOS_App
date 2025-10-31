@@ -2,13 +2,15 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
+import 'package:trustnet/services/location-status-tracking-service.dart';
+import 'package:trustnet/services/trusted-contacts-service.dart';
+import 'package:trustnet/services/notification-service.dart';
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,6 +28,8 @@ class _HomePageState extends State<HomePage> {
   bool redMode=false;
   final AudioRecorder _recorder=AudioRecorder();
   String? _recordingPath;
+  bool _isRedMode = false;
+
 
   final Map<String, Color> statusColors = {
     "OFF": Colors.grey,
@@ -33,18 +37,13 @@ class _HomePageState extends State<HomePage> {
     "RED": Colors.red,
   };
 
-  late final DatabaseReference _dbRef;
+  late final LocationStatusTrackingService _locationStatusService;
 
   @override
   void initState() {
     super.initState();
 
-    _dbRef = FirebaseDatabase.instanceFor(
-      app: Firebase.app(),
-      databaseURL:
-          "https://trustnet-an-sos-app-default-rtdb.asia-southeast1.firebasedatabase.app",
-    ).ref().child("users");
-
+    _locationStatusService = LocationStatusTrackingService();
     _requestLocationPermission();
    // _requestMicPermission();
     _fetchUsername();
@@ -56,6 +55,7 @@ class _HomePageState extends State<HomePage> {
     if(user == null) return;
 
     userId = user.uid;
+    await _locationStatusService.initialize(userId!);
 
     try {
       final doc = await FirebaseFirestore.instance
@@ -65,6 +65,14 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         username = doc.data()?['name'] ?? userId;
       });
+
+      // Initialize services AFTER getting userId
+        final contactsService = TrustedContactsService();
+        final notificationService = NotificationService(contactsService);
+        
+        await contactsService.subscribeToTrustedContacts(userId!);
+        await notificationService.initialize();
+        
     } catch (e) {
       debugPrint("Error fetching username: $e");
     }
@@ -91,81 +99,17 @@ class _HomePageState extends State<HomePage> {
   }
 }*/
 
-  void toggleStatus() {
+  void toggleStatus() async {
+    final newStatus = await _locationStatusService.toggleStatus(status);
     setState(() {
-      if (status == "OFF") {
-        status = "GREEN";
-        _startLiveLocation();
-      } else if (status == "GREEN") {
-        status = "RED";
-        _startLiveLocation(redMode: true);
-        _startRecording();
-      } else if (status == "RED") {
-        status = "OFF";
-        _stopLiveLocation();
-        _stopRecording();
-      }
+      status = newStatus;
     });
-  }
 
-  void _startLiveLocation({redMode = false}) {
-    _locationTimer?.cancel();
-    _locationTimer = Timer.periodic(const Duration(seconds: 20), (_) async {
-      await _updateLocationInDB(redMode: redMode);
-    });
-  }
-
-  void _stopLiveLocation() async {
-    _locationTimer?.cancel();
-    _locationTimer = null;
-
-    if (userId == null) return;
-    await _dbRef.child(userId!).update({
-      "status": "OFF",
-      "lastUpdated": DateTime.now().toIso8601String(),
-    });
-  }
-
-  Future<void> _updateLocationInDB({ redMode = false}) async {
-    if (username == null) return;
-
-    try {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
-
-      // Skip update if user hasn't moved significantly
-      if (_lastPosition != null) {
-        final distance = Geolocator.distanceBetween(
-          _lastPosition!.latitude,
-          _lastPosition!.longitude,
-          position.latitude,
-          position.longitude,
-        );
-        if (distance < 5 && !redMode) return;
-      }
-      _lastPosition = position;
-
-      final mapsUrl =
-          "https://www.google.com/maps?q=${position.latitude},${position.longitude}";
-
-      final data = {
-        "latitude": position.latitude,
-        "longitude": position.longitude,
-        "mapsUrl": mapsUrl,
-        "status": redMode ? "RED" : "GREEN",
-        "lastUpdated": DateTime.now().toIso8601String(),
-      };
-
-      if (redMode) data["alert"] = true;
-
-      // Keyed by username
-      if(userId == null) return;
-      await _dbRef.child(userId!).update(data);
-    } catch (e) {
-      debugPrint("Location update failed: $e");
+    if(status == 'RED'){
+      _startRecording();
+    }
+    else if(status == 'OFF'){
+      _stopRecording();
     }
   }
 
@@ -208,7 +152,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    _locationTimer?.cancel();
+    _locationStatusService.dispose();
     super.dispose();
   }
 

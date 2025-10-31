@@ -11,19 +11,6 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform, // initialize Firebase
   );
-
-  final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
-
-  // Initialize services only if user is logged in
-  if (currentUid.isNotEmpty) {
-    final contactsService = TrustedContactsService();
-    final notificationService = NotificationService(contactsService);
-
-    await contactsService.subscribeToTrustedContacts(currentUid);
-    await notificationService.initialize();
-  }
-
-
   runApp(const MyApp()); // run app only after Firebase is ready
 }
 
