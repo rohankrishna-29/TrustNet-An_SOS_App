@@ -1,1 +1,0 @@
-This directory will contain all the code that pertains to the backend for the project

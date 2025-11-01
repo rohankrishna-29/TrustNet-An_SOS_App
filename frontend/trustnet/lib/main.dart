@@ -1,3 +1,4 @@
+/*
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:trustnet/utils/user_logged_in_check.dart';
@@ -40,9 +41,10 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+*/
 
 
-/*
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -112,4 +114,4 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
-*/
+
