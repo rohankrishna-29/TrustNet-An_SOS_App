@@ -67,11 +67,11 @@ class _HomePageState extends State<HomePage> {
       });
 
       // Initialize services AFTER getting userId
-        final contactsService = TrustedContactsService();
-        final notificationService = NotificationService(contactsService);
+        //final contactsService = TrustedContactsService();
+        //final notificationService = NotificationService(contactsService);
         
-        await contactsService.subscribeToTrustedContacts(userId!);
-        await notificationService.initialize();
+        //await contactsService.subscribeToTrustedContacts(userId!);
+        //await notificationService.initialize();
         
     } catch (e) {
       debugPrint("Error fetching username: $e");

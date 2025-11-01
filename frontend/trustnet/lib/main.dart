@@ -1,14 +1,20 @@
-/*
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:trustnet/services/background_message_handler.dart';
 import 'package:trustnet/utils/user_logged_in_check.dart';
 import 'firebase_options.dart'; //required for Firebase config
+import 'package:trustnet/services/background_message_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); //ensures plugin binding
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform, // initialize Firebase
   );
+
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  
   runApp(const MyApp()); // run app only after Firebase is ready
 }
 
@@ -41,10 +47,9 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-*/
 
 
-
+/*
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -114,4 +119,5 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
+*/
 

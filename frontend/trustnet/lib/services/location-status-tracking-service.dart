@@ -31,6 +31,30 @@ class LocationStatusTrackingService {
   /// Initialize the service with the current user ID
   Future<void> initialize(String userId) async {
     _userId = userId;
+
+    final name = await getUserName(userId);
+    if(name != null){
+      await _dbRef.child(userId).update({
+        "name": name,
+        "initializedAt": DateTime.now().toIso8601String(),
+      });
+    }
+  }
+
+  Future<String?> getUserName(String userId) async{
+    try{
+      final docSnapshot = await _firestore.collection('users').doc(userId).get();
+      if(docSnapshot.exists){
+        return docSnapshot.get('name') as String?;
+      } else {
+        debugPrint("User document doesnt exist for user id: $userId");
+        return null;
+      }
+    }
+    catch(e){
+      debugPrint("Failed to fetch username: $e");
+      return null;
+    }
   }
 
   /// Toggle status and update location
@@ -116,8 +140,6 @@ class LocationStatusTrackingService {
         "status": redMode ? "RED" : "GREEN",
         "lastUpdated": DateTime.now().toIso8601String(),
       };
-
-      if (redMode) data["alert"] = true;
 
       await _dbRef.child(_userId!).update(data);
       debugPrint("📍 Location updated: $data");
