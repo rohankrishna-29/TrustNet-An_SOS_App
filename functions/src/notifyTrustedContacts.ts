@@ -3,11 +3,16 @@ import * as admin from "firebase-admin";
 
 admin.initializeApp();
 
-export const sendAlertToTrustedContacts = onValueWritten("/users/{userId}/status", async (event) => {
-  const userId = event.params.userId;
+export const sendAlertToTrustedContacts = onValueWritten(
+  {
+    ref: "/users/{userId}/status", 
+    region: "asia-southeast1",
+  },
+  async (event) => {
+    const userId = event.params.userId;
 
-  const newStatus = event.data?.after.val();
-  if (!newStatus) return;
+    const newStatus = event.data?.after.val();
+    if (!newStatus) return;
 
   // Get user's name from RTDB
   const userNameSnapshot = await admin.database().ref(`/users/${userId}/name`).once("value");
@@ -16,17 +21,17 @@ export const sendAlertToTrustedContacts = onValueWritten("/users/{userId}/status
   // Determine notification body based on status
   let notificationBody: string;
   switch (newStatus) {
-  case "GREEN":
-    notificationBody = `${userName} is sharing their location`;
-    break;
-  case "RED":
-    notificationBody = `${userName} needs help!`;
-    break;
-  case "OFF":
-    notificationBody = `${userName} has stopped sharing their location`;
-    break;
-  default:
-    return;
+    case "GREEN":
+      notificationBody = `${userName} is sharing their location`;
+      break;
+    case "RED":
+      notificationBody = `${userName} needs help!`;
+      break;
+    case "OFF":
+      notificationBody = `${userName} has stopped sharing their location`;
+      break;
+    default:
+      return;
   }
 
   // Get trusted contacts UIDs from Firestore
