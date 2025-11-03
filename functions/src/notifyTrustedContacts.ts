@@ -1,73 +1,100 @@
-import {onValueWritten} from "firebase-functions/v2/database";
+// ✅ 1. Imports stay the same
+import { onValueWritten } from "firebase-functions/v2/database";
 import * as admin from "firebase-admin";
 
-admin.initializeApp();
+// ✅ 2. Added safe initialization check
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
 export const sendAlertToTrustedContacts = onValueWritten(
   {
-    ref: "/users/{userId}/status", 
+    ref: "/users/{userId}/status",
     region: "asia-southeast1",
   },
   async (event) => {
     const userId = event.params.userId;
-
     const newStatus = event.data?.after.val();
-    if (!newStatus) return;
 
-  // Get user's name from RTDB
-  const userNameSnapshot = await admin.database().ref(`/users/${userId}/name`).once("value");
-  const userName = userNameSnapshot.val() || "A user";
+    // ✅ 3. Added debug log to confirm trigger
+    console.log("Triggered for user:", userId, "New status:", newStatus);
 
-  // Determine notification body based on status
-  let notificationBody: string;
-  switch (newStatus) {
-    case "GREEN":
-      notificationBody = `${userName} is sharing their location`;
-      break;
-    case "RED":
-      notificationBody = `${userName} needs help!`;
-      break;
-    case "OFF":
-      notificationBody = `${userName} has stopped sharing their location`;
-      break;
-    default:
-      return;
-  }
+    if (!newStatus) {
+      console.log("No new status, exiting...");
+      return null;
+    }
 
-  // Get trusted contacts UIDs from Firestore
-  const trustedContactsSnapshot = await admin.firestore()
-    .collection("users")
-    .doc(userId)
-    .collection("trusted_contacts")
-    .get();
+    // ✅ 4. Fetch user's name from RTDB (unchanged)
+    const userNameSnapshot = await admin.database().ref(`/users/${userId}/name`).once("value");
+    const userName = userNameSnapshot.val() || "A user";
 
-  const tokens: string[] = [];
+    // ✅ 5. Status message determination (unchanged, just cleaned)
+    let notificationBody;
+    switch (newStatus) {
+      case "GREEN":
+        notificationBody = `${userName} is sharing their location`;
+        break;
+      case "RED":
+        notificationBody = `${userName} needs help!`;
+        break;
+      case "OFF":
+        notificationBody = `${userName} has stopped sharing their location`;
+        break;
+      default:
+        console.log("Unknown status value, skipping...");
+        return null;
+    }
 
-  for (const doc of trustedContactsSnapshot.docs) {
-    const contactUid = doc.id;
-
-    const contactDoc = await admin.firestore()
+    // ✅ 6. Fetch trusted contacts from Firestore (same)
+    const trustedContactsSnapshot = await admin.firestore()
       .collection("users")
-      .doc(contactUid)
+      .doc(userId)
+      .collection("trusted_contacts")
       .get();
 
-    const fcmTokens = contactDoc.data()?.fcmTokens;
-    if (Array.isArray(fcmTokens) && fcmTokens.length > 0) {
-      tokens.push(...fcmTokens.filter((token) => typeof token === "string" && token.length > 0));
+    if (trustedContactsSnapshot.empty) {
+      console.log("No trusted contacts found for", userId);
+      return null;
+    }
+
+    const tokens = [];
+
+    for (const doc of trustedContactsSnapshot.docs) {
+      const contactUid = doc.id;
+      const contactDoc = await admin.firestore().collection("users").doc(contactUid).get();
+      const fcmTokens = contactDoc.data()?.fcmTokens;
+
+      // ✅ 7. Added more detailed logging for token checks
+      if (Array.isArray(fcmTokens) && fcmTokens.length > 0) {
+        const validTokens = fcmTokens.filter((t) => typeof t === "string" && t.length > 0);
+        console.log(`Valid tokens found for contact ${contactUid}:`, validTokens);
+        tokens.push(...validTokens);
+      } else {
+        console.log(`No FCM tokens found for contact: ${contactUid}`);
+      }
+    }
+
+    if (tokens.length === 0) {
+      console.log("No valid FCM tokens to send to.");
+      return null;
+    }
+
+    const message = {
+      notification: {
+        title: "TrustNet Alert",
+        body: notificationBody,
+      },
+      tokens,
+    };
+
+    // ✅ 8. Added error handling and logging
+    try {
+      const response = await admin.messaging().sendMulticast(message);
+      console.log("FCM response:", response);
+      return response;
+    } catch (error) {
+      console.error("Error sending FCM:", error);
+      return null;
     }
   }
-
-  if (tokens.length === 0) {
-    return;
-  }
-
-  const message = {
-    notification: {
-      title: "Trustnet Alert",
-      body: notificationBody,
-    },
-    tokens,
-  };
-
-  await admin.messaging().sendMulticast(message);
-});
+);
