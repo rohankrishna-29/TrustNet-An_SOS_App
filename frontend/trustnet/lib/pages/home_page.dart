@@ -19,7 +19,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin {
   String status = "OFF";
   Timer? _locationTimer;
   String? userId;
@@ -28,7 +28,7 @@ class _HomePageState extends State<HomePage> {
   bool redMode=false;
   final AudioRecorder _recorder=AudioRecorder();
   String? _recordingPath;
-  bool _isRedMode = false;
+  final bool _isRedMode = false;
 
 
   final Map<String, Color> statusColors = {
@@ -38,6 +38,9 @@ class _HomePageState extends State<HomePage> {
   };
 
   late final LocationStatusTrackingService _locationStatusService;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -67,11 +70,11 @@ class _HomePageState extends State<HomePage> {
       });
 
       // Initialize services AFTER getting userId
-        //final contactsService = TrustedContactsService();
-        //final notificationService = NotificationService(contactsService);
+       /* final contactsService = TrustedContactsService();
+        final notificationService = NotificationService(contactsService);
         
-        //await contactsService.subscribeToTrustedContacts(userId!);
-        //await notificationService.initialize();
+        await contactsService.subscribeToTrustedContacts(userId!);
+        await notificationService.initialize();*/
         
     } catch (e) {
       debugPrint("Error fetching username: $e");
@@ -158,6 +161,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final color = statusColors[status]!;
 
     return Scaffold(
