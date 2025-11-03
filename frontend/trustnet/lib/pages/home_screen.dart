@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:trustnet/utils/file_utils.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:trustnet/services/fcm_local_notification_handler.dart';
+import 'package:trustnet/utils/user_logged_in_check.dart';
 
 
 
@@ -104,6 +105,11 @@ class _HomeScreenState extends State<HomeScreen> {
               if(value ==  'recording_dir'){
                 await FileUtils.openRecordingsFolder();
               }
+              else if (value==3){
+                await FirebaseAuth.instance.signOut();
+                UserLoggedInCheck();
+
+              }
             },
             itemBuilder: (context) =>  [
             PopupMenuItem(
@@ -128,8 +134,8 @@ class _HomeScreenState extends State<HomeScreen> {
               value: 3, 
               child: Row(
                 children: [
-                  Icon(Icons.history),
-                  Text("History")
+                  Icon(Icons.logout),
+                  Text("Logout")
                 ],
               )
             ),
