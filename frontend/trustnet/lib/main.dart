@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:trustnet/services/auth_wrapper.dart';
 import 'firebase_options.dart'; //required for Firebase config
 import 'package:trustnet/pages/login_page.dart';
 
@@ -36,7 +37,7 @@ class MyApp extends StatelessWidget {
       ),
 
       themeMode: ThemeMode.dark,
-      home: const LoginPage(), 
+      home: const AuthWrapper(), 
     );
   }
 }
