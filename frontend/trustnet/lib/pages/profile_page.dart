@@ -1,20 +1,6 @@
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData.dark(),
-      home: ProfilePage(),
-    );
-  }
-}
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -24,35 +10,91 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String name = 'Insert Name';
-  String mobile = 'xxxxxxxxxxxx';
-  String email = 'xxxxxx@xxxx.xxx';
-  String sex = 'Enter Sex';
-  String dob = 'XX/XX/XXXX';
+  final user = FirebaseAuth.instance.currentUser;
+  final firestore = FirebaseFirestore.instance;
 
-  // Text controllers for editing profile details
+  String name = '';
+  String phone = '';
+  String email = '';
+  String sex = '';
+  String dob = '';
+
   TextEditingController nameController = TextEditingController();
-  TextEditingController mobileController = TextEditingController();
+  TextEditingController phoneController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController sexController = TextEditingController();
   TextEditingController dobController = TextEditingController();
 
   bool isEditing = false;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  // 🔹 Load user data from Firestore
+  Future<void> _loadProfile() async {
+    if (user == null) return;
+
+    try {
+      DocumentSnapshot userDoc =
+          await firestore.collection('users').doc(user!.uid).get();
+
+      if (userDoc.exists) {
+        final data = userDoc.data() as Map<String, dynamic>;
+        setState(() {
+          name = data['name'] ?? 'Insert Name';
+          phone = data['phone'] ?? 'xxxxxxxxxxxx';
+          email = data['email'] ?? user!.email ?? 'xxxxxx@xxxx.xxx';
+          sex = data['sex'] ?? 'Enter Sex';
+          dob = data['dob'] ?? 'XX/XX/XXXX';
+          isLoading = false;
+        });
+      } else {
+        // No user doc yet
+        setState(() => isLoading = false);
+      }
+    } catch (e) {
+      print('Error loading profile: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
+  // 🔹 Save user data to Firestore
+  Future<void> _saveProfile() async {
+    if (user == null) return;
+
+    try {
+      await firestore.collection('users').doc(user!.uid).set({
+        'name': name,
+        'phone': phone,
+        'email': email,
+        'sex': sex,
+        'dob': dob,
+      }, SetOptions(merge: true));
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Profile saved!')));
+    } catch (e) {
+      print('Error saving profile: $e');
+    }
+  }
 
   void toggleEditMode() {
     setState(() {
       isEditing = !isEditing;
       if (!isEditing) {
-        // Save the entered data when switching off edit mode
         name = nameController.text;
-        mobile = mobileController.text;
+        phone = phoneController.text;
         email = emailController.text;
         sex = sexController.text;
         dob = dobController.text;
+        _saveProfile(); // Save to Firestore
       } else {
-        // Set the controllers to the current profile details
         nameController.text = name;
-        mobileController.text = mobile;
+        phoneController.text = phone;
         emailController.text = email;
         sexController.text = sex;
         dobController.text = dob;
@@ -62,6 +104,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Padding(
@@ -69,18 +118,18 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(height: 40),
+            const SizedBox(height: 40),
             CircleAvatar(
               radius: 60,
               backgroundColor: Colors.grey[800],
-              child: Icon(Icons.person, size: 60, color: Colors.white),
+              child: const Icon(Icons.person, size: 60, color: Colors.white),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             isEditing
                 ? TextField(
                     controller: nameController,
-                    style: TextStyle(fontSize: 24, color: Colors.white),
-                    decoration: InputDecoration(
+                    style: const TextStyle(fontSize: 24, color: Colors.white),
+                    decoration: const InputDecoration(
                       hintText: 'Insert Name',
                       hintStyle: TextStyle(color: Colors.white60),
                       border: InputBorder.none,
@@ -88,12 +137,15 @@ class _ProfilePageState extends State<ProfilePage> {
                   )
                 : Text(
                     name,
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ProfileDetailRow(
               label: 'Mobile No.',
-              value: isEditing ? mobileController : mobile,
+              value: isEditing ? phoneController : phone,
               isEditing: isEditing,
             ),
             ProfileDetailRow(
@@ -111,19 +163,19 @@ class _ProfilePageState extends State<ProfilePage> {
               value: isEditing ? dobController : dob,
               isEditing: isEditing,
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             ElevatedButton(
               onPressed: toggleEditMode,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.purple,
-                minimumSize: Size(double.infinity, 50),
+                minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               child: Text(
                 isEditing ? 'Save Details' : 'Edit Details',
-                style: TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.white),
               ),
             ),
           ],
@@ -138,7 +190,8 @@ class ProfileDetailRow extends StatelessWidget {
   final dynamic value;
   final bool isEditing;
 
-  const ProfileDetailRow({super.key, 
+  const ProfileDetailRow({
+    super.key,
     required this.label,
     required this.value,
     required this.isEditing,
@@ -153,17 +206,17 @@ class ProfileDetailRow extends StatelessWidget {
         children: [
           Text(
             '$label: ',
-            style: TextStyle(color: Colors.white, fontSize: 16),
+            style: const TextStyle(color: Colors.white, fontSize: 16),
           ),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           isEditing
               ? Expanded(
                   child: TextField(
                     controller: value,
-                    style: TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       hintText: 'Enter $label',
-                      hintStyle: TextStyle(color: Colors.white60),
+                      hintStyle: const TextStyle(color: Colors.white60),
                       border: InputBorder.none,
                     ),
                   ),
@@ -171,7 +224,7 @@ class ProfileDetailRow extends StatelessWidget {
               : Expanded(
                   child: Text(
                     value,
-                    style: TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.white),
                   ),
                 ),
         ],
