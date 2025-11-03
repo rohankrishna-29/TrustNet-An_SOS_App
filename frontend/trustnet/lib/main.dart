@@ -24,6 +24,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+
+      debugShowCheckedModeBanner: false,
+      
       title: 'TrustNet: An SOS App for Women and Child Safety',
 
       theme: ThemeData.from(

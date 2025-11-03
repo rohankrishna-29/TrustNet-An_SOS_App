@@ -2,9 +2,12 @@
 import { onValueWritten } from "firebase-functions/v2/database";
 import * as admin from "firebase-admin";
 
-// ✅ 2. Added safe initialization check
+// ✅ 2. Safe initialization
 if (!admin.apps.length) {
-  admin.initializeApp();
+  admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+    databaseURL: "https://trustnet-an-sos-app-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  });
 }
 
 export const sendAlertToTrustedContacts = onValueWritten(
@@ -16,7 +19,7 @@ export const sendAlertToTrustedContacts = onValueWritten(
     const userId = event.params.userId;
     const newStatus = event.data?.after.val();
 
-    // ✅ 3. Added debug log to confirm trigger
+    // ✅ 3. Debug log to confirm trigger
     console.log("Triggered for user:", userId, "New status:", newStatus);
 
     if (!newStatus) {
@@ -24,11 +27,11 @@ export const sendAlertToTrustedContacts = onValueWritten(
       return null;
     }
 
-    // ✅ 4. Fetch user's name from RTDB (unchanged)
+    // ✅ 4. Fetch user's name
     const userNameSnapshot = await admin.database().ref(`/users/${userId}/name`).once("value");
     const userName = userNameSnapshot.val() || "A user";
 
-    // ✅ 5. Status message determination (unchanged, just cleaned)
+    // ✅ 5. Determine notification message
     let notificationBody;
     switch (newStatus) {
       case "GREEN":
@@ -45,8 +48,9 @@ export const sendAlertToTrustedContacts = onValueWritten(
         return null;
     }
 
-    // ✅ 6. Fetch trusted contacts from Firestore (same)
-    const trustedContactsSnapshot = await admin.firestore()
+    // ✅ 6. Fetch trusted contacts from Firestore
+    const trustedContactsSnapshot = await admin
+      .firestore()
       .collection("users")
       .doc(userId)
       .collection("trusted_contacts")
@@ -57,14 +61,14 @@ export const sendAlertToTrustedContacts = onValueWritten(
       return null;
     }
 
-    const tokens = [];
-
+    const tokens: string[] = [];
+    
     for (const doc of trustedContactsSnapshot.docs) {
       const contactUid = doc.id;
       const contactDoc = await admin.firestore().collection("users").doc(contactUid).get();
       const fcmTokens = contactDoc.data()?.fcmTokens;
 
-      // ✅ 7. Added more detailed logging for token checks
+      // ✅ 7. Validate and log tokens
       if (Array.isArray(fcmTokens) && fcmTokens.length > 0) {
         const validTokens = fcmTokens.filter((t) => typeof t === "string" && t.length > 0);
         console.log(`Valid tokens found for contact ${contactUid}:`, validTokens);
@@ -79,18 +83,34 @@ export const sendAlertToTrustedContacts = onValueWritten(
       return null;
     }
 
+    // ✅ 8. Prepare message payload
     const message = {
+      tokens,
       notification: {
         title: "TrustNet Alert",
         body: notificationBody,
       },
-      tokens,
+      data: {
+        userId: userId || "",
+        type: "status_update",
+      },
     };
 
-    // ✅ 8. Added error handling and logging
+    // ✅ 9. Send notifications using the correct method
     try {
-      const response = await admin.messaging().sendMulticast(message);
-      console.log("FCM response:", response);
+      const response = await admin.messaging().sendEachForMulticast(message);
+
+      console.log(
+        `FCM multicast result — Success: ${response.successCount}, Failure: ${response.failureCount}`
+      );
+
+      if (response.failureCount > 0) {
+        const failedTokens = response.responses
+          .map((res, i) => (!res.success ? tokens[i] : null))
+          .filter(Boolean);
+        console.warn("Failed tokens:", failedTokens);
+      }
+
       return response;
     } catch (error) {
       console.error("Error sending FCM:", error);
