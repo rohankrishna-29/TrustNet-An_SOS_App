@@ -33,27 +33,65 @@ class LocationStatusTrackingService {
     _userId = userId;
 
     final name = await getUserName(userId);
-    if(name != null){
+    if (name != null) {
       await _dbRef.child(userId).update({
         "name": name,
-        "initializedAt": DateTime.now().toIso8601String(),
       });
     }
+
+    // Start passive updates immediately at launch (OFF mode)
+    startPassiveLocationUpdates();
   }
 
-  Future<String?> getUserName(String userId) async{
-    try{
-      final docSnapshot = await _firestore.collection('users').doc(userId).get();
-      if(docSnapshot.exists){
+  Future<String?> getUserName(String userId) async {
+    try {
+      final docSnapshot =
+          await _firestore.collection('users').doc(userId).get();
+      if (docSnapshot.exists) {
         return docSnapshot.get('name') as String?;
       } else {
         debugPrint("User document doesnt exist for user id: $userId");
         return null;
       }
-    }
-    catch(e){
+    } catch (e) {
       debugPrint("Failed to fetch username: $e");
       return null;
+    }
+  }
+
+  /// Start passive OFF mode updates: immediate + every 2 minutes
+  void startPassiveLocationUpdates() {
+    _locationTimer?.cancel();
+    _updateLocationPassive(); // immediate update once
+
+    _locationTimer = Timer.periodic(const Duration(minutes: 2), (_) async {
+      await _updateLocationPassive();
+    });
+  }
+
+  /// Passive location update (does not change status)
+  Future<void> _updateLocationPassive() async {
+    if (_userId == null) return;
+
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+
+      final mapsUrl =
+          "https://www.google.com/maps?q=${position.latitude},${position.longitude}";
+
+      await _dbRef.child(_userId!).update({
+        "latitude": position.latitude,
+        "longitude": position.longitude,
+        "mapsUrl": mapsUrl,
+        "lastUpdated": DateTime.now().toIso8601String(),
+      });
+
+      debugPrint("📍 Passive OFF update sent (no status change)");
+    } catch (e) {
+      debugPrint("⚠️ Passive location update failed: $e");
     }
   }
 
@@ -73,14 +111,16 @@ class LocationStatusTrackingService {
       _isRedMode = false;
     }
 
-    // Update immediately
-    await _updateLocationInDB(redMode: _isRedMode);
+    _locationTimer?.cancel();
 
-    // Then start/stop periodic updates
-    if (newStatus != "OFF") {
-      _startLiveLocation();
+    if (newStatus == "OFF") {
+      // 🟤 When going OFF: update with status OFF + location + time, then slow updates
+      await _updateLocationAndStatusOff();
+      startPassiveLocationUpdates();
     } else {
-      await _stopLiveLocation();
+      // 🟢/🔴 For GREEN/RED: immediate update, then every 20 sec
+      await _updateLocationInDB(redMode: _isRedMode);
+      _startLiveLocation();
     }
 
     _statusController.add(newStatus);
@@ -95,19 +135,33 @@ class LocationStatusTrackingService {
     });
   }
 
-  /// Stop location updates and set status to OFF
-  Future<void> _stopLiveLocation() async {
-    _locationTimer?.cancel();
-    _locationTimer = null;
-
+  /// Update location and status=OFF explicitly when turning off
+  Future<void> _updateLocationAndStatusOff() async {
     if (_userId == null) return;
-    await _dbRef.child(_userId!).update({
-      "status": "OFF",
-      "lastUpdated": DateTime.now().toIso8601String(),
-    });
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+
+      final mapsUrl =
+          "https://www.google.com/maps?q=${position.latitude},${position.longitude}";
+
+      await _dbRef.child(_userId!).update({
+        "latitude": position.latitude,
+        "longitude": position.longitude,
+        "mapsUrl": mapsUrl,
+        "status": "OFF",
+        "lastUpdated": DateTime.now().toIso8601String(),
+      });
+
+      debugPrint("🟤 Switched to OFF: location and status updated immediately");
+    } catch (e) {
+      debugPrint("⚠️ Failed to update OFF status: $e");
+    }
   }
 
-  /// Update location and status in Realtime DB
+  /// Update location and status (GREEN or RED)
   Future<void> _updateLocationInDB({required bool redMode}) async {
     if (_userId == null) return;
 
@@ -144,7 +198,7 @@ class LocationStatusTrackingService {
       await _dbRef.child(_userId!).update(data);
       debugPrint("📍 Location updated: $data");
     } catch (e) {
-      debugPrint("Location update failed: $e");
+      debugPrint("⚠️ Location update failed: $e");
     }
   }
 
