@@ -13,13 +13,13 @@ import 'package:trustnet/services/notification-service.dart';
 
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({Key? key}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin{
   String status = "OFF";
   Timer? _locationTimer;
   String? userId;
@@ -28,8 +28,10 @@ class _HomePageState extends State<HomePage> {
   bool redMode=false;
   final AudioRecorder _recorder=AudioRecorder();
   String? _recordingPath;
-  bool _isRedMode = false;
+  final bool _isRedMode = false;
 
+  @override
+  bool get wantKeepAlive => true;
 
   final Map<String, Color> statusColors = {
     "OFF": Colors.grey,
@@ -66,12 +68,7 @@ class _HomePageState extends State<HomePage> {
         username = doc.data()?['name'] ?? userId;
       });
 
-      // Initialize services AFTER getting userId
-        //final contactsService = TrustedContactsService();
-        //final notificationService = NotificationService(contactsService);
-        
-        //await contactsService.subscribeToTrustedContacts(userId!);
-        //await notificationService.initialize();
+      //legacy notif started here
         
     } catch (e) {
       debugPrint("Error fetching username: $e");
@@ -88,16 +85,7 @@ class _HomePageState extends State<HomePage> {
       }
     }
   }
-  //Request mic permission
-/*  Future<void> _requestMicPermission() async {
-  final status = await Permission.microphone.status;
-  if (!status.isGranted) {
-    final result = await Permission.microphone.request();
-    if (!result.isGranted) {
-      debugPrint("Microphone permission denied.");
-    }
-  }
-}*/
+  //legacy mic permission here
 
   void toggleStatus() async {
     final newStatus = await _locationStatusService.toggleStatus(status);
@@ -158,6 +146,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final color = statusColors[status]!;
 
     return Scaffold(

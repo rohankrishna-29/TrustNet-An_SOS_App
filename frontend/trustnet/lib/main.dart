@@ -4,7 +4,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:trustnet/services/background_message_handler.dart';
 import 'package:trustnet/utils/user_logged_in_check.dart';
 import 'firebase_options.dart'; //required for Firebase config
-import 'package:trustnet/services/background_message_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); //ensures plugin binding
