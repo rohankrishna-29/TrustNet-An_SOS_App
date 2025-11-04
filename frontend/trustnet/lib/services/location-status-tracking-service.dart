@@ -4,6 +4,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import 'package:dart_geohash/dart_geohash.dart';
 
 class LocationStatusTrackingService {
   final FirebaseDatabase _rtdb = FirebaseDatabase.instanceFor(
@@ -26,6 +27,12 @@ class LocationStatusTrackingService {
 
   LocationStatusTrackingService() {
     _dbRef = _rtdb.ref().child("users");
+  }
+
+  /// 🆕 Compute geohash for given lat/lon
+  String _computeGeohash(double latitude, double longitude) {
+    final geoHasher = GeoHasher();
+    return geoHasher.encode(longitude, latitude);
   }
 
   /// Initialize the service with the current user ID
@@ -82,9 +89,12 @@ class LocationStatusTrackingService {
       final mapsUrl =
           "https://www.google.com/maps?q=${position.latitude},${position.longitude}";
 
+      final geohash = _computeGeohash(position.latitude, position.longitude);
+
       await _dbRef.child(_userId!).update({
         "latitude": position.latitude,
         "longitude": position.longitude,
+        "geohash": geohash,
         "mapsUrl": mapsUrl,
         "lastUpdated": DateTime.now().toIso8601String(),
       });
@@ -146,10 +156,12 @@ class LocationStatusTrackingService {
 
       final mapsUrl =
           "https://www.google.com/maps?q=${position.latitude},${position.longitude}";
+      final geohash = _computeGeohash(position.latitude, position.longitude);
 
       await _dbRef.child(_userId!).update({
         "latitude": position.latitude,
         "longitude": position.longitude,
+        "geohash": geohash,
         "mapsUrl": mapsUrl,
         "status": "OFF",
         "lastUpdated": DateTime.now().toIso8601String(),
@@ -186,10 +198,13 @@ class LocationStatusTrackingService {
 
       final mapsUrl =
           "https://www.google.com/maps?q=${position.latitude},${position.longitude}";
+      
+      final geohash = _computeGeohash(position.latitude, position.longitude);
 
       final data = {
         "latitude": position.latitude,
         "longitude": position.longitude,
+        "geohash": geohash,
         "mapsUrl": mapsUrl,
         "status": redMode ? "RED" : "GREEN",
         "lastUpdated": DateTime.now().toIso8601String(),
