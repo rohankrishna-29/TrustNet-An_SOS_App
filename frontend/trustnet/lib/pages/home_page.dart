@@ -2,172 +2,106 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
+import 'package:trustnet/services/location-status-tracking-service.dart';
+import 'package:trustnet/services/trusted-contacts-service.dart';
+import 'package:trustnet/services/notification-service.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
 
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
+  class HomePage extends StatefulWidget {
+    const HomePage({Key? key}) : super(key: key);
 
-class _HomePageState extends State<HomePage> {
-  String status = "OFF";
-  Timer? _locationTimer;
-  String? userId;
-  String? username; 
-  Position? _lastPosition;
-  bool redMode=false;
-  final AudioRecorder _recorder=AudioRecorder();
-  String? _recordingPath;
-
-  final Map<String, Color> statusColors = {
-    "OFF": Colors.grey,
-    "GREEN": Colors.green,
-    "RED": Colors.red,
-  };
-
-  late final DatabaseReference _dbRef;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _dbRef = FirebaseDatabase.instanceFor(
-      app: Firebase.app(),
-      databaseURL:
-          "https://trustnet-an-sos-app-default-rtdb.asia-southeast1.firebasedatabase.app",
-    ).ref().child("users");
-
-    _requestLocationPermission();
-   // _requestMicPermission();
-    _fetchUsername();
+    @override
+    State<HomePage> createState() => _HomePageState();
   }
 
-  // Fetch username from Firestore for Realtime DB readability
-  Future<void> _fetchUsername() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if(user == null) return;
+  class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin{
+    String status = "OFF";
+    Timer? _locationTimer;
+    String? userId;
+    String? username; 
+    Position? _lastPosition;
+    bool redMode=false;
+    final AudioRecorder _recorder=AudioRecorder();
+    String? _recordingPath;
+    final bool _isRedMode = false;
 
-    userId = user.uid;
+    @override
+    bool get wantKeepAlive => true;
 
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .get();
-      setState(() {
-        username = doc.data()?['name'] ?? userId;
-      });
-    } catch (e) {
-      debugPrint("Error fetching username: $e");
+    final Map<String, Color> statusColors = {
+      "OFF": Colors.grey,
+      "GREEN": Colors.green,
+      "RED": Colors.red,
+    };
+
+    late final LocationStatusTrackingService _locationStatusService;
+
+    @override
+    void initState() {
+      super.initState();
+
+      _locationStatusService = LocationStatusTrackingService();
+      _requestLocationPermission();
+    // _requestMicPermission();
+      _fetchUsername();
     }
-  }
 
-  // Request location permission
-  Future<void> _requestLocationPermission() async {
-    final status = await Permission.locationWhenInUse.status;
-    if (!status.isGranted) {
-      final result = await Permission.locationWhenInUse.request();
-      if (!result.isGranted) {
-        debugPrint("Location permission denied.");
+    // Fetch username from Firestore for Realtime DB readability
+    Future<void> _fetchUsername() async {
+      final user = FirebaseAuth.instance.currentUser;
+      if(user == null) return;
+
+      userId = user.uid;
+      await _locationStatusService.initialize(userId!);
+
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .get();
+        setState(() {
+          username = doc.data()?['name'] ?? userId;
+        });
+
+        _locationStatusService.startPassiveLocationUpdates();
+
+        //legacy notif started here
+          
+      } catch (e) {
+        debugPrint("Error fetching username: $e");
       }
     }
-  }
-  //Request mic permission
-/*  Future<void> _requestMicPermission() async {
-  final status = await Permission.microphone.status;
-  if (!status.isGranted) {
-    final result = await Permission.microphone.request();
-    if (!result.isGranted) {
-      debugPrint("Microphone permission denied.");
-    }
-  }
-}*/
 
-  void toggleStatus() {
-    setState(() {
-      if (status == "OFF") {
-        status = "GREEN";
-        _startLiveLocation();
-      } else if (status == "GREEN") {
-        status = "RED";
-        _startLiveLocation(redMode: true);
+    // Request location permission
+    Future<void> _requestLocationPermission() async {
+      final status = await Permission.locationWhenInUse.status;
+      if (!status.isGranted) {
+        final result = await Permission.locationWhenInUse.request();
+        if (!result.isGranted) {
+          debugPrint("Location permission denied.");
+        }
+      }
+    }
+    //legacy mic permission here
+
+    void toggleStatus() async {
+      final newStatus = await _locationStatusService.toggleStatus(status);
+      setState(() {
+        status = newStatus;
+      });
+
+      if(status == 'RED'){
         _startRecording();
-      } else if (status == "RED") {
-        status = "OFF";
-        _stopLiveLocation();
+      }
+      else if(status == 'OFF'){
         _stopRecording();
       }
-    });
-  }
-
-  void _startLiveLocation({redMode = false}) {
-    _locationTimer?.cancel();
-    _locationTimer = Timer.periodic(const Duration(seconds: 20), (_) async {
-      await _updateLocationInDB(redMode: redMode);
-    });
-  }
-
-  void _stopLiveLocation() async {
-    _locationTimer?.cancel();
-    _locationTimer = null;
-
-    if (userId == null) return;
-    await _dbRef.child(userId!).update({
-      "status": "OFF",
-      "lastUpdated": DateTime.now().toIso8601String(),
-    });
-  }
-
-  Future<void> _updateLocationInDB({ redMode = false}) async {
-    if (username == null) return;
-
-    try {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
-
-      // Skip update if user hasn't moved significantly
-      if (_lastPosition != null) {
-        final distance = Geolocator.distanceBetween(
-          _lastPosition!.latitude,
-          _lastPosition!.longitude,
-          position.latitude,
-          position.longitude,
-        );
-        if (distance < 5 && !redMode) return;
-      }
-      _lastPosition = position;
-
-      final mapsUrl =
-          "https://www.google.com/maps?q=${position.latitude},${position.longitude}";
-
-      final data = {
-        "latitude": position.latitude,
-        "longitude": position.longitude,
-        "mapsUrl": mapsUrl,
-        "status": redMode ? "RED" : "GREEN",
-        "lastUpdated": DateTime.now().toIso8601String(),
-      };
-
-      if (redMode) data["alert"] = true;
-
-      // Keyed by username
-      if(userId == null) return;
-      await _dbRef.child(userId!).update(data);
-    } catch (e) {
-      debugPrint("Location update failed: $e");
     }
-  }
 
 
   Future<void> _startRecording() async {
@@ -208,12 +142,13 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    _locationTimer?.cancel();
+    _locationStatusService.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final color = statusColors[status]!;
 
     return Scaffold(

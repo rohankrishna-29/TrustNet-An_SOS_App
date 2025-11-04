@@ -3,9 +3,19 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:trustnet/pages/home_screen.dart';
 import 'package:trustnet/pages/signup_page.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-class LoginPage extends StatelessWidget {
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+
+
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     // Controllers to capture email and password
@@ -26,17 +36,36 @@ class LoginPage extends StatelessWidget {
       }
 
       try {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
+        UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: email,
           password: password,
         );
 
+        //get current userid
+        final userId = userCredential.user?.uid;
+        if(userId != null){
+          //get fcm token for device
+          final fcmToken = await FirebaseMessaging.instance.getToken();
+
+          if(fcmToken != null){
+            //write fcm token into the doc of the user in firestore
+            await FirebaseFirestore.instance.collection('users').doc(userId).update({
+              'fcmTokens': FieldValue.arrayUnion([fcmToken]), 
+            });
+          }
+        }
+
+        if(!mounted) return;
+
+
         // Navigate to HomeScreen after successful login
         Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
-      } on FirebaseAuthException catch (e) {
+      } 
+      on FirebaseAuthException catch (e) {
+        if(!mounted) return;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(e.message ?? "Login failed")));
@@ -83,41 +112,38 @@ class LoginPage extends StatelessWidget {
 
               // Password Field with visibility toggle
               
-StatefulBuilder(
-  builder: (context, setState) {
+              StatefulBuilder(
+                builder: (context, setState) {
 
-    return TextField(
-      controller: passwordController,
-      obscureText: obscurePassword,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        hintText: 'Password',
-        hintStyle: const TextStyle(color: Colors.grey),
-        filled: true,
-        fillColor: const Color(0xFF1E1E1E),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide.none,
-        ),
-        suffixIcon: IconButton(
-          icon: Icon(
-            obscurePassword ? Icons.visibility_off : Icons.visibility,
-            color: Colors.grey,
-          ),
-          onPressed: () {
-            setState(() {
-              obscurePassword = !obscurePassword;
-            });
-          },
-        ),
-      ),
-    );
-  },
-),
+                  return TextField(
+                    controller: passwordController,
+                    obscureText: obscurePassword,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Password',
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      filled: true,
+                      fillColor: const Color(0xFF1E1E1E),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: BorderSide.none,
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          color: Colors.grey,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            obscurePassword = !obscurePassword;
+                          });
+                        },
+                      ),
+                    ),
+                  );
+                },
+              ),
 
-              
-
-              
               
               const SizedBox(height: 20),
 
@@ -169,6 +195,7 @@ StatefulBuilder(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
+                        if(!mounted) return;
                         Navigator.push(
                           context,
                           MaterialPageRoute(

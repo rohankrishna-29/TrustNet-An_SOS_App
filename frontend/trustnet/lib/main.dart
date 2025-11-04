@@ -1,14 +1,19 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:trustnet/services/background_message_handler.dart';
+import 'package:trustnet/utils/user_logged_in_check.dart';
 import 'firebase_options.dart'; //required for Firebase config
-import 'package:trustnet/pages/login_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); //ensures plugin binding
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform, // initialize Firebase
   );
 
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  
   runApp(const MyApp()); // run app only after Firebase is ready
 }
 
@@ -18,6 +23,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+
+      debugShowCheckedModeBanner: false,
+
       title: 'TrustNet: An SOS App for Women and Child Safety',
 
       theme: ThemeData.from(
@@ -37,7 +45,7 @@ class MyApp extends StatelessWidget {
       ),
 
       themeMode: ThemeMode.dark,
-      home: const LoginPage(), 
+      home: const UserLoggedInCheck(), 
     );
   }
 }

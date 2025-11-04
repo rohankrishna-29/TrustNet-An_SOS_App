@@ -6,6 +6,9 @@ import 'package:trustnet/pages/profile_page.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:trustnet/utils/file_utils.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:trustnet/services/fcm_local_notification_handler.dart';
+import 'package:trustnet/utils/user_logged_in_check.dart';
 
 
 
@@ -36,9 +39,14 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
+    requestNotificationPermission();
+    FcmLocalNotificationHandler.initialize();
+
+
     // Fetch current Firebase user UID
     final user = FirebaseAuth.instance.currentUser;
     currentUid = user?.uid ?? '';
+
 
     // Initialize pages with currentUid passed to ContactsPage
     _pages = [
@@ -48,6 +56,25 @@ class _HomeScreenState extends State<HomeScreen> {
       ProfilePage()
     ];
   }
+
+  Future<void> requestNotificationPermission() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print('User granted permission');
+    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+      print('User granted provisional permission');
+    } else {
+      print('User declined or has not accepted permission');
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -78,6 +105,11 @@ class _HomeScreenState extends State<HomeScreen> {
               if(value ==  'recording_dir'){
                 await FileUtils.openRecordingsFolder();
               }
+              else if (value==3){
+                await FirebaseAuth.instance.signOut();
+                UserLoggedInCheck();
+
+              }
             },
             itemBuilder: (context) =>  [
             PopupMenuItem(
@@ -102,8 +134,8 @@ class _HomeScreenState extends State<HomeScreen> {
               value: 3, 
               child: Row(
                 children: [
-                  Icon(Icons.history),
-                  Text("History")
+                  Icon(Icons.logout),
+                  Text("Logout")
                 ],
               )
             ),
@@ -111,7 +143,12 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         ],
       ),
-      body: _pages[_selectedIndex],
+
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _pages,
+      ),
+
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
