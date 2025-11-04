@@ -5,8 +5,7 @@ import 'package:trustnet/pages/signup_page.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-
+import 'package:trustnet/pages/forgot_password.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,62 +15,60 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  @override
-  Widget build(BuildContext context) {
-    // Controllers to capture email and password
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
-    bool obscurePassword = true;
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  bool obscurePassword = true;
 
-    // Firebase login function
-    void loginUser() async {
-      final email = emailController.text.trim();
-      final password = passwordController.text.trim();
+  // Firebase login function
+  void loginUser() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
 
-      if (email.isEmpty || password.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Email and password cannot be empty")),
-        );
-        return;
-      }
-
-      try {
-        UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: email,
-          password: password,
-        );
-
-        //get current userid
-        final userId = userCredential.user?.uid;
-        if(userId != null){
-          //get fcm token for device
-          final fcmToken = await FirebaseMessaging.instance.getToken();
-
-          if(fcmToken != null){
-            //write fcm token into the doc of the user in firestore
-            await FirebaseFirestore.instance.collection('users').doc(userId).update({
-              'fcmTokens': FieldValue.arrayUnion([fcmToken]), 
-            });
-          }
-        }
-
-        if(!mounted) return;
-
-
-        // Navigate to HomeScreen after successful login
-        Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      } 
-      on FirebaseAuthException catch (e) {
-        if(!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.message ?? "Login failed")));
-      }
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Email and password cannot be empty")),
+      );
+      return;
     }
 
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      //get current userid
+      final userId = userCredential.user?.uid;
+      if(userId != null){
+        //get fcm token for device
+        final fcmToken = await FirebaseMessaging.instance.getToken();
+
+        if(fcmToken != null){
+          //write fcm token into the doc of the user in firestore
+          await FirebaseFirestore.instance.collection('users').doc(userId).update({
+            'fcmTokens': FieldValue.arrayUnion([fcmToken]), 
+          });
+        }
+      }
+
+      if(!mounted) return;
+
+      // Navigate to HomeScreen after successful login
+      Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } 
+    on FirebaseAuthException catch (e) {
+      if(!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message ?? "Login failed")));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
@@ -83,14 +80,13 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               const Spacer(),
 
-              SvgPicture.asset(  // app icon
-                      'lib/assets/icons/TrustNet-logo+text.svg',
-                        width: 100,
-                        height: 100,
-                    ),
+              SvgPicture.asset(
+                  'lib/assets/icons/TrustNet-logo+text.svg',
+                  width: 100,
+                  height: 100,
+              ),
               const SizedBox(height: 8),
 
-              
               const SizedBox(height: 60),
 
               // Email Field
@@ -111,10 +107,8 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 16),
 
               // Password Field with visibility toggle
-              
               StatefulBuilder(
-                builder: (context, setState) {
-
+                builder: (context, setStateField) {
                   return TextField(
                     controller: passwordController,
                     obscureText: obscurePassword,
@@ -134,7 +128,7 @@ class _LoginPageState extends State<LoginPage> {
                           color: Colors.grey,
                         ),
                         onPressed: () {
-                          setState(() {
+                          setStateField(() {
                             obscurePassword = !obscurePassword;
                           });
                         },
@@ -143,8 +137,6 @@ class _LoginPageState extends State<LoginPage> {
                   );
                 },
               ),
-
-              
               const SizedBox(height: 20),
 
               // Login Button
@@ -173,7 +165,12 @@ class _LoginPageState extends State<LoginPage> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ForgotPasswordPage()),
+                    );
+                  },
                   child: const Text(
                     "Forgot Password?",
                     style: TextStyle(color: Color(0xFF9D4EDD), fontSize: 14),
