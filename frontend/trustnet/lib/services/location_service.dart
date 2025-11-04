@@ -42,6 +42,7 @@ class LocationService {
 
             final update = {
               'userId': contactUserId,
+              'name' : data['name'],
               'latitude': data['latitude'],
               'longitude': data['longitude'],
               'status': data['status'],

@@ -45,48 +45,46 @@ class _SOSMapPageState extends State<SOSMapPage> {
 
   /// Get the current user’s GPS location
   Future<void> _getUserLocation() async {
-  bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  if (!serviceEnabled) {
-    await Geolocator.openLocationSettings();
-    return;
-  }
-
-  LocationPermission permission = await Geolocator.checkPermission();
-  if (permission == LocationPermission.denied) {
-    permission = await Geolocator.requestPermission();
-    if (permission == LocationPermission.denied) {
-      debugPrint("❌ Location permission denied");
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      await Geolocator.openLocationSettings();
       return;
     }
-  }
 
-  if (permission == LocationPermission.deniedForever) {
-    debugPrint("❌ Location permission permanently denied");
-    return;
-  }
-
-  final position = await Geolocator.getCurrentPosition(
-    locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-  );
-
-  setState(() {
-    _userLatLng = LatLng(position.latitude, position.longitude);
-    _isLoading = false;
-  });
-
-  // ✅ move only after map is rendered
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (mounted) {
-      try {
-        _mapController.move(_userLatLng!, 15.0);
-      } catch (e) {
-        debugPrint("⚠️ Map not ready yet: $e");
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        debugPrint("❌ Location permission denied");
+        return;
       }
     }
-  });
-}
 
+    if (permission == LocationPermission.deniedForever) {
+      debugPrint("❌ Location permission permanently denied");
+      return;
+    }
 
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+    );
+
+    setState(() {
+      _userLatLng = LatLng(position.latitude, position.longitude);
+      _isLoading = false;
+    });
+
+    // ✅ move only after map is rendered
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        try {
+          _mapController.move(_userLatLng!, 15.0);
+        } catch (e) {
+          debugPrint("⚠️ Map not ready yet: $e");
+        }
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -134,7 +132,7 @@ class _SOSMapPageState extends State<SOSMapPage> {
                 point: _userLatLng!,
                 child: const Icon(
                   Icons.location_pin,
-                  color: Colors.blueAccent,
+                  color: Colors.purple,
                   size: 48,
                 ),
               ),
@@ -144,6 +142,7 @@ class _SOSMapPageState extends State<SOSMapPage> {
                 final lat = contact['latitude'];
                 final lng = contact['longitude'];
                 final status = contact['status'];
+                final name = contact['name'] ?? 'Unknown';
 
                 Color pinColor;
                 switch (status) {
@@ -165,7 +164,36 @@ class _SOSMapPageState extends State<SOSMapPage> {
                   height: 60,
                   point: LatLng(lat, lng),
                   child: GestureDetector(
-                    onTap: () => _launchMaps(lat, lng),
+                    onTap: () async {
+                      await showDialog(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: Text(name),
+                          content: Text('Status: $status\nLocation: $lat, $lng'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Close'),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                Navigator.pop(context); // close dialog before launching
+                                final url = Uri.parse(
+                                    'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
+                                if (await canLaunchUrl(url)) {
+                                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Could not launch Google Maps')),
+                                  );
+                                }
+                              },
+                              child: const Text('Open in Google Maps'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                     child: Icon(Icons.location_pin, color: pinColor, size: 52),
                   ),
                 );
@@ -177,7 +205,7 @@ class _SOSMapPageState extends State<SOSMapPage> {
 
       // 🔄 Button to refresh your location manually
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Colors.purple,
         child: const Icon(Icons.my_location),
         onPressed: _getUserLocation,
       ),
