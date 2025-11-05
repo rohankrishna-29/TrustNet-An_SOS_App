@@ -54,6 +54,7 @@ dependencies:
   open_filex: ^4.7.0
   open_file_manager: ^2.0.1
   flutter_local_notifications: ^19.5.0
+  dart_geohash: ^2.1.0
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.2
